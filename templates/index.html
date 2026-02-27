@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %} Home {% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">Welcome to Construction Manager</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Clients</h5>
+            </div>
+            <div class="card-body">
+                <p>Manage your clients and their information.</p>
+                <a href="/clients" class="btn btn-primary">View Clients</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Employees</h5>
+            </div>
+            <div class="card-body">
+                <p>Manage your employees and their roles.</p>
+                <a href="/employees" class="btn btn-success">View Employees</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Materials</h5>
+            </div>
+            <div class="card-body">
+                <p>Track your construction materials and inventory.</p>
+                <a href="/materials" class="btn btn-warning text-dark">View Materials</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Projects</h5>
+            </div>
+            <div class="card-body">
+                <p>Manage your construction projects.</p>
+                <a href="/projects" class="btn btn-info">View Projects</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Purchases</h5>
+            </div>
+            <div class="card-body">
+                <p>Track purchases and orders.</p>
+                <a href="/purchases" class="btn btn-secondary">View Purchases</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Reports</h5>
+            </div>
+            <div class="card-body">
+                <p>View financial and project reports.</p>
+                <a href="/reports" class="btn btn-danger">View Reports</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

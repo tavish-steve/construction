@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %} Materials {% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">Materials Management</h2>
+    </div>
+</div>
+
+<!-- Add Material Form -->
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0">Add New Material</h5>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('add_material') }}" method="POST" class="row g-3">
+            <div class="col-md-3">
+                <label for="material_name" class="form-label">Material Name</label>
+                <input type="text" class="form-control" id="material_name" name="material_name" required>
+            </div>
+            <div class="col-md-3">
+                <label for="unit" class="form-label">Unit</label>
+                <input type="text" class="form-control" id="unit" name="unit" placeholder="e.g., bags, pieces, kg">
+            </div>
+            <div class="col-md-3">
+                <label for="unit_price" class="form-label">Unit Price</label>
+                <input type="number" class="form-control" id="unit_price" name="unit_price">
+            </div>
+            <div class="col-md-3">
+                <label for="stock_quantity" class="form-label">Stock Quantity</label>
+                <input type="number" class="form-control" id="stock_quantity" name="stock_quantity">
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-warning text-dark">Add Material</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Materials Table -->
+<div class="card">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">All Materials</h5>
+    </div>
+    <div class="card-body">
+        <table id="materialsTable" class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Material Name</th>
+                    <th>Unit</th>
+                    <th>Unit Price</th>
+                    <th>Stock Quantity</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for material in materials %}
+                <tr>
+                    <td>{{ material.material_id }}</td>
+                    <td>{{ material.material_name }}</td>
+                    <td>{{ material.unit }}</td>
+                    <td>KSh {{ material.unit_price|default(0)|int }}</td>
+                    <td>
+                        <span class="badge bg-{{ 'danger' if material.stock_quantity|default(0)|int < 10 else 'success' }}">
+                            {{ material.stock_quantity }}
+                        </span>
+                    </td>
+                    <td>{{ material.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#materialsTable').DataTable();
+    });
+</script>
+{% endblock %}

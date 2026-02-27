@@ -1,0 +1,33 @@
+/* Navbar custom styles */
+.navbar {
+    padding: 0.5rem 1rem;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+.nav-link {
+    padding: 0.5rem 1rem !important;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+/* Ensure navbar is visible */
+.navbar-collapse {
+    flex-grow: 1;
+}
+
+.navbar-nav {
+    flex-direction: row;
+}
+
+/* Container fluid adjustment */
+.container-fluid {
+    padding-left: 15px;
+    padding-right: 15px;
+}

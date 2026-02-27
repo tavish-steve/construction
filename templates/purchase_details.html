@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %} Purchase Details {% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">Purchase Details Management</h2>
+    </div>
+</div>
+
+<!-- Purchase Details Table -->
+<div class="card">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">All Purchase Details</h5>
+    </div>
+    <div class="card-body">
+        <table id="purchaseDetailsTable" class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Supplier</th>
+                    <th>Material</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Purchase Date</th>
+                    <th>Purchase ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detail in purchase_details %}
+                <tr>
+                    <td>{{ detail.supplier_name }}</td>
+                    <td>{{ detail.material_name }}</td>
+                    <td>{{ detail.quantity }}</td>
+                    <td>KSh {{ detail.price|default(0) }}</td>
+                    <td>{{ detail.purchase_date }}</td>
+                    <td>{{ detail.purchase_id }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function() {
+        $('#purchaseDetailsTable').DataTable();
+    });
+</script>
+{% endblock %}
