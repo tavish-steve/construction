@@ -1,83 +1,193 @@
 {% extends 'base.html' %}
-{% block title %} Home {% endblock %}
+{% block title %} Home - Water Marc Builders {% endblock %}
+{% block page_title %}Dashboard{% endblock %}
 {% block content %}
-<div class="row">
+
+<!-- Welcome Section -->
+<div class="row mb-4">
     <div class="col-12">
-        <h2 class="mb-4">Welcome to Construction Manager</h2>
+        <div class="about-section">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h2><i class="fas fa-hard-hat me-2 text-primary"></i>Welcome to Water Marc Builders</h2>
+                    <p class="lead mb-0">A premier construction company dedicated to delivering high-quality construction services with excellence and professionalism. Since our establishment, we have been committed to transforming visions into reality.</p>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <span class="badge bg-primary fs-6 py-2 px-3"><i class="fas fa-calendar-alt me-2"></i>{{ current_year }}</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card">
+<!-- Mission & Vision Cards -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
             <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Clients</h5>
+                <h5 class="mb-0"><i class="fas fa-bullseye me-2"></i>Our Mission</h5>
             </div>
             <div class="card-body">
-                <p>Manage your clients and their information.</p>
-                <a href="/clients" class="btn btn-primary">View Clients</a>
+                <p class="mb-0">To deliver exceptional construction solutions that exceed client expectations while maintaining the highest standards of safety, quality, and sustainability.</p>
             </div>
         </div>
     </div>
     
-    <div class="col-md-4 mb-4">
-        <div class="card">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
             <div class="card-header bg-success text-white">
-                <h5 class="mb-0">Employees</h5>
+                <h5 class="mb-0"><i class="fas fa-eye me-2"></i>Our Vision</h5>
             </div>
             <div class="card-body">
-                <p>Manage your employees and their roles.</p>
-                <a href="/employees" class="btn btn-success">View Employees</a>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">Materials</h5>
-            </div>
-            <div class="card-body">
-                <p>Track your construction materials and inventory.</p>
-                <a href="/materials" class="btn btn-warning text-dark">View Materials</a>
+                <p class="mb-0">To be the most trusted and reliable construction partner in the region, known for our commitment to excellence and innovative approaches.</p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-4 mb-4">
+<!-- Services Section -->
+<div class="row mb-4">
+    <div class="col-12">
         <div class="card">
             <div class="card-header bg-info text-white">
-                <h5 class="mb-0">Projects</h5>
+                <h5 class="mb-0"><i class="fas fa-concierge-bell me-2"></i>Our Services</h5>
             </div>
             <div class="card-body">
-                <p>Manage your construction projects.</p>
-                <a href="/projects" class="btn btn-info">View Projects</a>
+                <div class="row">
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <div class="d-flex align-items-start">
+                            <div class="feature-icon bg-primary bg-opacity-10 p-3 rounded me-3">
+                                <i class="fas fa-building text-primary fs-4"></i>
+                            </div>
+                            <div>
+                                <h6>Construction Projects</h6>
+                                <p class="text-muted small mb-0">End-to-end project management for residential and commercial buildings.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <div class="d-flex align-items-start">
+                            <div class="feature-icon bg-success bg-opacity-10 p-3 rounded me-3">
+                                <i class="fas fa-boxes text-success fs-4"></i>
+                            </div>
+                            <div>
+                                <h6>Material Supply</h6>
+                                <p class="text-muted small mb-0">Quality construction materials sourcing and inventory management.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-start">
+                            <div class="feature-icon bg-warning bg-opacity-10 p-3 rounded me-3">
+                                <i class="fas fa-money-bill-wave text-warning fs-4"></i>
+                            </div>
+                            <div>
+                                <h6>Payments & Finance</h6>
+                                <p class="text-muted small mb-0">Transparent payment tracking and financial management.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0">Purchases</h5>
-            </div>
-            <div class="card-body">
-                <p>Track purchases and orders.</p>
-                <a href="/purchases" class="btn btn-secondary">View Purchases</a>
-            </div>
-        </div>
+</div>
+
+<!-- Quick Access Section -->
+<div class="row">
+    <div class="col-12 mb-3">
+        <h4 class="text-muted"><i class="fas fa-th-large me-2"></i>Quick Access</h4>
     </div>
     
     <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-header bg-danger text-white">
-                <h5 class="mb-0">Reports</h5>
+        <a href="/clients" class="text-decoration-none">
+            <div class="quick-access-card clients">
+                <div class="icon-wrapper">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h5>Clients</h5>
+                <p>Manage your clients and their information</p>
+                <span class="btn btn-sm btn-primary">View Clients</span>
             </div>
-            <div class="card-body">
-                <p>View financial and project reports.</p>
-                <a href="/reports" class="btn btn-danger">View Reports</a>
+        </a>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <a href="/employees" class="text-decoration-none">
+            <div class="quick-access-card employees">
+                <div class="icon-wrapper">
+                    <i class="fas fa-hard-hat"></i>
+                </div>
+                <h5>Employees</h5>
+                <p>Manage your employees and their roles</p>
+                <span class="btn btn-sm btn-success">View Employees</span>
+            </div>
+        </a>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <a href="/materials" class="text-decoration-none">
+            <div class="quick-access-card materials">
+                <div class="icon-wrapper">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <h5>Materials</h5>
+                <p>Track your construction materials and inventory</p>
+                <span class="btn btn-sm btn-warning text-dark">View Materials</span>
+            </div>
+        </a>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <a href="/projects" class="text-decoration-none">
+            <div class="quick-access-card projects">
+                <div class="icon-wrapper">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h5>Projects</h5>
+                <p>Manage your construction projects</p>
+                <span class="btn btn-sm btn-info text-white">View Projects</span>
+            </div>
+        </a>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <a href="/purchases" class="text-decoration-none">
+            <div class="quick-access-card purchases">
+                <div class="icon-wrapper">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h5>Purchases</h5>
+                <p>Track purchases and orders</p>
+                <span class="btn btn-sm btn-dark">View Purchases</span>
+            </div>
+        </a>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <a href="/payments" class="text-decoration-none">
+            <div class="quick-access-card payments">
+                <div class="icon-wrapper">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <h5>Payments</h5>
+                <p>Track payments and transactions</p>
+                <span class="btn btn-sm btn-danger">View Payments</span>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Reports Quick Link -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card bg-gradient text-white" style="background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-1"><i class="fas fa-chart-bar me-2"></i>View Reports</h5>
+                    <p class="mb-0 opacity-75">Access comprehensive reports and analytics for your construction business</p>
+                </div>
+                <a href="/reports" class="btn btn-light text-primary"><i class="fas fa-arrow-right me-1"></i> View Reports</a>
             </div>
         </div>
     </div>

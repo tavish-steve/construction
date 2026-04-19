@@ -1,38 +1,69 @@
 {% extends "base.html" %}
-{% block title %} Employees {% endblock %}
+{% block title %} Employees - Water Marc Builders {% endblock %}
+{% block page_title %}Employees Management{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h2 class="mb-4">Employees Management</h2>
-    </div>
-</div>
 
 <!-- Add Employee Form -->
 <div class="card mb-4">
     <div class="card-header bg-success text-white">
-        <h5 class="mb-0">Add New Employee</h5>
+        <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Add New Employee</h5>
     </div>
     <div class="card-body">
         <form action="{{ url_for('add_employee') }}" method="POST" class="row g-3">
             <div class="col-md-3">
-                <label for="full_name" class="form-label">Full Name</label>
-                <input type="text" class="form-control" id="full_name" name="full_name" required>
+                <label for="full_name" class="form-label"><i class="fas fa-user me-1"></i>Full Name</label>
+                <input type="text" class="form-control" id="full_name" name="full_name" required placeholder="Employee name">
             </div>
             <div class="col-md-3">
-                <label for="role" class="form-label">Role</label>
-                <input type="text" class="form-control" id="role" name="role" placeholder="e.g., Mason, Carpenter, Electrician">
+                <label for="role" class="form-label"><i class="fas fa-briefcase me-1"></i>Role</label>
+                <input type="text" class="form-control" id="role" name="role" placeholder="e.g., Mason, Carpenter">
             </div>
             <div class="col-md-3">
-                <label for="phone" class="form-label">Phone</label>
-                <input type="text" class="form-control" id="phone" name="phone">
+                <label for="phone" class="form-label"><i class="fas fa-phone me-1"></i>Phone</label>
+                <input type="text" class="form-control" id="phone" name="phone" placeholder="Phone number">
             </div>
             <div class="col-md-3">
-                <label for="salary" class="form-label">Salary</label>
-                <input type="number" class="form-control" id="salary" name="salary">
+                <label for="wage_per_day" class="form-label"><i class="fas fa-money-bill me-1"></i>Wage per Day</label>
+                <input type="number" class="form-control" id="wage_per_day" name="wage_per_day" placeholder="KSh">
+            </div>
+            <div class="col-md-3">
+                <label for="total_expected" class="form-label"><i class="fas fa-calculator me-1"></i>Total Expected</label>
+                <input type="number" class="form-control" id="total_expected" name="total_expected" placeholder="Total cost">
             </div>
             <div class="col-12">
-                <button type="submit" class="btn btn-success">Add Employee</button>
+                <button type="submit" class="btn btn-success"><i class="fas fa-plus-circle me-1"></i>Add Employee</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Record Payment Form -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Record Payment to Employee</h5>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('add_employee_payment') }}" method="POST" class="row g-3">
+            <div class="col-md-4">
+                <label for="employee_id" class="form-label"><i class="fas fa-user me-1"></i>Select Employee</label>
+                <select class="form-select" id="employee_id" name="employee_id" required>
+                    <option value="">Choose Employee...</option>
+                    {% for employee in employees %}
+                    <option value="{{ employee.employee_id }}">{{ employee.full_name }} - {{ employee.role }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="amount_paid" class="form-label"><i class="fas fa-money-bill me-1"></i>Amount Paid</label>
+                <input type="number" class="form-control" id="amount_paid" name="amount_paid" step="0.01" required placeholder="KSh">
+            </div>
+            <div class="col-md-3">
+                <label for="payment_date" class="form-label"><i class="fas fa-calendar-alt me-1"></i>Payment Date</label>
+                <input type="date" class="form-control" id="payment_date" name="payment_date" required>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100"><i class="fas fa-save me-1"></i>Record</button>
             </div>
         </form>
     </div>
@@ -40,40 +71,53 @@
 
 <!-- Employees Table -->
 <div class="card">
-    <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">All Employees</h5>
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-users me-2"></i>All Employees</h5>
+        <span class="badge bg-light text-dark">{{ employees|length }} Employees</span>
     </div>
-    <div class="card-body">
-        <table id="employeesTable" class="table table-striped table-hover">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Full Name</th>
-                    <th>Role</th>
-                    <th>Phone</th>
-                    <th>Salary</th>
-                    <th>Created At</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for employee in employees %}
-                <tr>
-                    <td>{{ employee.employee_id }}</td>
-                    <td>{{ employee.full_name }}</td>
-                    <td>{{ employee.role }}</td>
-                    <td>{{ employee.phone }}</td>
-                    <td>KSh {{ employee.salary|default(0)|int }}</td>
-                    <td>{{ employee.created_at }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table id="employeesTable" class="table table-striped table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                        <th><i class="fas fa-user me-1"></i>Full Name</th>
+                        <th><i class="fas fa-briefcase me-1"></i>Role</th>
+                        <th><i class="fas fa-phone me-1"></i>Phone</th>
+                        <th><i class="fas fa-money-bill me-1"></i>Wage/Day</th>
+                        <th><i class="fas fa-check-circle me-1 text-success"></i>Money Paid</th>
+                        <th><i class="fas fa-exclamation-circle me-1 text-danger"></i>Balance</th>
+                        <th><i class="fas fa-clock me-1"></i>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ employee.employee_id }}</span></td>
+                        <td><strong>{{ employee.full_name }}</strong></td>
+                        <td>{{ employee.role }}</td>
+                        <td>{{ employee.phone }}</td>
+                        <td>KSh {{ employee.wage_per_day|default(0)|int }}</td>
+                        <td><span class="text-success">KSh {{ employee.money_paid|default(0)|int }}</span></td>
+                        <td><span class="text-danger">KSh {{ employee.money_not_paid|default(0)|int }}</span></td>
+                        <td><small class="text-muted">{{ employee.created_at }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <script>
     $(document).ready(function() {
-        $('#employeesTable').DataTable();
+        $('#employeesTable').DataTable({
+            order: [[1, 'desc']],
+            language: {
+                search: "Search employees:",
+                lengthMenu: "Show _MENU_ entries"
+            }
+        });
     });
 </script>
 {% endblock %}

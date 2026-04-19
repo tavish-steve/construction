@@ -3,10 +3,13 @@ import psycopg2
 from database import (
     init_db_pool,
     close_all_connections,
+    init_employee_tables,
     get_clients,
     insert_clients,
     get_employees,
     insert_employees,
+    get_employee_payments,
+    insert_employee_payment,
     get_projects,
     insert_project,
     get_materials,
@@ -37,25 +40,17 @@ def before_request():
     except Exception as e:
         app.logger.error(f"Database pool initialization failed: {e}")
 
-# Home - Reports Dashboard
+# Home - Company Info Page
 @app.route('/')
 def index():
-    """Display all reports on the home page"""
-    projects_with_clients = get_projects_with_clients()
-    project_materials = get_project_materials()
-    purchases_with_suppliers = get_purchases_with_suppliers()
-    purchase_details = get_purchase_details()
-    payment_report = get_payment_report()
-    
-    return render_template(
-        'reports.html',
-        title='Dashboard - All Reports',
-        projects_with_clients=projects_with_clients,
-        project_materials=project_materials,
-        purchases_with_suppliers=purchases_with_suppliers,
-        purchase_details=purchase_details,
-        payment_report=payment_report
-    )
+    """Display company information on the home page"""
+    return render_template('index.html', title='Home')
+
+# Dashboard route (alias for home)
+@app.route('/dashboard')
+def dashboard():
+    """Display the dashboard - same as home page"""
+    return redirect(url_for('index'))
 
 # Clients
 @app.route('/clients')
@@ -90,11 +85,27 @@ def add_employee():
     full_name = request.form.get('full_name')
     role = request.form.get('role')
     phone = request.form.get('phone')
-    salary = request.form.get('salary')
+    wage_per_day = request.form.get('wage_per_day')
+    total_expected = request.form.get('total_expected')
     
     if full_name:
-        salary_float = float(salary) if salary else 0.0
-        insert_employees((full_name, role, phone, salary_float))
+        wage_float = float(wage_per_day) if wage_per_day else 0.0
+        total_float = float(total_expected) if total_expected else 0.0
+        insert_employees((full_name, role, phone, wage_float, total_float))
+    
+    return redirect(url_for('employees'))
+
+@app.route('/add_employee_payment', methods=['POST'])
+def add_employee_payment():
+    """Record a payment to an employee"""
+    employee_id = request.form.get('employee_id')
+    amount_paid = request.form.get('amount_paid')
+    payment_date = request.form.get('payment_date')
+    
+    if employee_id and amount_paid:
+        employee_id_int = int(employee_id)
+        amount_float = float(amount_paid)
+        insert_employee_payment((employee_id_int, amount_float, payment_date))
     
     return redirect(url_for('employees'))
 
@@ -252,6 +263,8 @@ if __name__ == '__main__':
     try:
         # Initialize pool before running
         init_db_pool()
+        # Initialize employee tables
+        init_employee_tables()
         app.run(debug=True)
     finally:
         # Clean up connection pool on shutdown

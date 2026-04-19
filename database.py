@@ -96,6 +96,52 @@ def close_all_connections():
         _pool_initialized = False
         logger.info("Database connection pool closed")
 
+def init_employee_tables():
+    """Initialize employee-related tables and columns"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        # Create employees table if it doesn't exist
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS employees (
+                employee_id SERIAL PRIMARY KEY,
+                full_name VARCHAR(255) NOT NULL,
+                role VARCHAR(100),
+                phone VARCHAR(50),
+                wage_per_day DECIMAL(10,2) DEFAULT 0,
+                total_expected DECIMAL(10,2) DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Add created_at column if it doesn't exist (for existing tables)
+        try:
+            cur.execute("ALTER TABLE employees ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+        except:
+            pass
+            
+        logger.info("Created employees table")
+        
+        # Create employee_payments table if it doesn't exist
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS employee_payments (
+                payment_id SERIAL PRIMARY KEY,
+                employee_id INTEGER REFERENCES employees(employee_id),
+                amount_paid DECIMAL(10,2) NOT NULL,
+                payment_date DATE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        logger.info("Created employee_payments table")
+        
+        cur.close()
+    except psycopg2.Error as e:
+        logger.error(f"Error initializing employee tables: {e}")
+    finally:
+        return_connection(conn)
+
 # ============= CLIENTS =============
 def get_clients():
     conn = None
@@ -133,7 +179,24 @@ def get_employees():
     try:
         conn = get_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT employee_id, full_name, role, phone, salary FROM employees ORDER BY employee_id DESC")
+        cur.execute("""
+            SELECT 
+                e.employee_id, 
+                e.full_name, 
+                e.role, 
+                e.phone, 
+                COALESCE(e.wage_per_day, 0) as wage_per_day,
+                COALESCE(ep.total_paid, 0) as money_paid,
+                COALESCE(e.total_expected, 0) - COALESCE(ep.total_paid, 0) as money_not_paid,
+                e.created_at
+            FROM employees e
+            LEFT JOIN (
+                SELECT employee_id, SUM(amount_paid) as total_paid
+                FROM employee_payments
+                GROUP BY employee_id
+            ) ep ON e.employee_id = ep.employee_id
+            ORDER BY e.employee_id DESC
+        """)
         result = cur.fetchall()
         cur.close()
         return result
@@ -148,12 +211,50 @@ def insert_employees(values):
     try:
         conn = get_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("INSERT INTO employees(full_name, role, phone, salary) VALUES (%s, %s, %s, %s) RETURNING employee_id", values)
+        cur.execute("INSERT INTO employees(full_name, role, phone, wage_per_day, total_expected) VALUES (%s, %s, %s, %s, %s) RETURNING employee_id", values)
         result = cur.fetchone()
         cur.close()
         return result
     except psycopg2.Error as e:
         logger.error(f"Error inserting employee: {e}")
+        return None
+    finally:
+        return_connection(conn)
+
+# ============= EMPLOYEE PAYMENTS =============
+def get_employee_payments():
+    """Get all employee payments"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            SELECT ep.payment_id, ep.employee_id, e.full_name, ep.amount_paid, ep.payment_date
+            FROM employee_payments ep
+            LEFT JOIN employees e ON ep.employee_id = e.employee_id
+            ORDER BY ep.payment_date DESC
+        """)
+        result = cur.fetchall()
+        cur.close()
+        return result
+    except psycopg2.Error as e:
+        logger.error(f"Error getting employee payments: {e}")
+        return []
+    finally:
+        return_connection(conn)
+
+def insert_employee_payment(values):
+    """Insert a new employee payment"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("INSERT INTO employee_payments(employee_id, amount_paid, payment_date) VALUES (%s, %s, %s) RETURNING payment_id", values)
+        result = cur.fetchone()
+        cur.close()
+        return result
+    except psycopg2.Error as e:
+        logger.error(f"Error inserting employee payment: {e}")
         return None
     finally:
         return_connection(conn)

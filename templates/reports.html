@@ -1,9 +1,37 @@
 {% extends 'base.html' %}
-{% block title %} Reports {% endblock %}
+{% block title %} Reports - Water Marc Builders {% endblock %}
+{% block page_title %}Reports Dashboard{% endblock %}
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <h2 class="mb-4">Reports Dashboard</h2>
+
+<!-- Summary Stats -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="stat-card primary">
+            <div class="stat-icon"><i class="fas fa-building"></i></div>
+            <div class="stat-value">{{ projects_with_clients|length }}</div>
+            <div class="stat-label">Total Projects</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card success">
+            <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+            <div class="stat-value">{{ purchases_with_suppliers|length }}</div>
+            <div class="stat-label">Total Purchases</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card warning">
+            <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+            <div class="stat-value">{{ payment_report|length }}</div>
+            <div class="stat-label">Total Payments</div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card info">
+            <div class="stat-icon"><i class="fas fa-boxes"></i></div>
+            <div class="stat-value">{{ project_materials|length }}</div>
+            <div class="stat-label">Material Records</div>
+        </div>
     </div>
 </div>
 
@@ -11,31 +39,34 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Projects with Clients</h5>
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-building me-2"></i>Projects with Clients</h5>
+                <span class="badge bg-light text-dark">{{ projects_with_clients|length }}</span>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if projects_with_clients %}
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Project Name</th>
-                                <th>Client</th>
-                                <th>Location</th>
-                                <th>Budget</th>
-                                <th>Status</th>
-                                <th>Start Date</th>
-                                <th>End Date</th>
+                                <th><i class="fas fa-sort-numeric-up me-1"></i>#</th>
+                                <th><i class="fas fa-building me-1"></i>Project Name</th>
+                                <th><i class="fas fa-user me-1"></i>Client</th>
+                                <th><i class="fas fa-map-marker-alt me-1"></i>Location</th>
+                                <th><i class="fas fa-money-bill me-1"></i>Budget</th>
+                                <th><i class="fas fa-info-circle me-1"></i>Status</th>
+                                <th><i class="fas fa-calendar-alt me-1"></i>Start Date</th>
+                                <th><i class="fas fa-calendar-check me-1"></i>End Date</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for project in projects_with_clients %}
                             <tr>
-                                <td>{{ project.project_name }}</td>
+                                <td><span class="badge bg-primary">{{ loop.index }}</span></td>
+                                <td><strong>{{ project.project_name }}</strong></td>
                                 <td>{{ project.client_name }}</td>
                                 <td>{{ project.location }}</td>
-                                <td>KSh {{ project.budget|default(0) }}</td>
+                                <td>KSh {{ project.budget|default(0)|int }}</td>
                                 <td><span class="badge bg-{% if project.status == 'completed' %}success{% elif project.status == 'active' %}primary{% else %}warning{% endif %}">{{ project.status|default('pending') }}</span></td>
                                 <td>{{ project.start_date }}</td>
                                 <td>{{ project.end_date }}</td>
@@ -45,7 +76,10 @@
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted">No projects found.</p>
+                <div class="empty-state">
+                    <div class="icon"><i class="fas fa-folder-open"></i></div>
+                    <p>No projects found.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -56,25 +90,28 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">Project Materials</h5>
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>Project Materials</h5>
+                <span class="badge bg-light text-dark">{{ project_materials|length }}</span>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if project_materials %}
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Project</th>
-                                <th>Material</th>
-                                <th>Quantity Used</th>
-                                <th>Used On</th>
+                                <th><i class="fas fa-sort-numeric-up me-1"></i>#</th>
+                                <th><i class="fas fa-building me-1"></i>Project</th>
+                                <th><i class="fas fa-box me-1"></i>Material</th>
+                                <th><i class="fas fa-plus-minus me-1"></i>Quantity Used</th>
+                                <th><i class="fas fa-calendar me-1"></i>Used On</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for pm in project_materials %}
                             <tr>
-                                <td>{{ pm.project_name }}</td>
+                                <td><span class="badge bg-primary">{{ loop.index }}</span></td>
+                                <td><strong>{{ pm.project_name }}</strong></td>
                                 <td>{{ pm.material_name }}</td>
                                 <td>{{ pm.quantity_used }}</td>
                                 <td>{{ pm.used_on }}</td>
@@ -84,7 +121,10 @@
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted">No project materials found.</p>
+                <div class="empty-state">
+                    <div class="icon"><i class="fas fa-box-open"></i></div>
+                    <p>No project materials found.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -95,29 +135,32 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
-            <div class="card-header bg-success text-white">
-                <h5 class="mb-0">Purchases with Suppliers</h5>
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Purchases with Suppliers</h5>
+                <span class="badge bg-light text-dark">{{ purchases_with_suppliers|length }}</span>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if purchases_with_suppliers %}
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Purchase ID</th>
-                                <th>Supplier</th>
-                                <th>Date</th>
-                                <th>Total Amount</th>
-                                <th>Status</th>
+                                <th><i class="fas fa-sort-numeric-up me-1"></i>#</th>
+                                <th><i class="fas fa-hashtag me-1"></i>Purchase ID</th>
+                                <th><i class="fas fa-user me-1"></i>Supplier</th>
+                                <th><i class="fas fa-calendar-alt me-1"></i>Date</th>
+                                <th><i class="fas fa-money-bill me-1"></i>Total Amount</th>
+                                <th><i class="fas fa-info-circle me-1"></i>Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for purchase in purchases_with_suppliers %}
                             <tr>
-                                <td>{{ purchase.purchase_id }}</td>
-                                <td>{{ purchase.supplier_name }}</td>
+                                <td><span class="badge bg-primary">{{ loop.index }}</span></td>
+                                <td><span class="badge bg-secondary">{{ purchase.purchase_id }}</span></td>
+                                <td><strong>{{ purchase.supplier_name }}</strong></td>
                                 <td>{{ purchase.purchase_date }}</td>
-                                <td>KSh {{ purchase.total_amount|default(0) }}</td>
+                                <td><span class="text-success">KSh {{ purchase.total_amount|default(0) }}</span></td>
                                 <td><span class="badge bg-{% if purchase.status == 'completed' %}success{% elif purchase.status == 'pending' %}warning{% else %}secondary{% endif %}">{{ purchase.status|default('pending') }}</span></td>
                             </tr>
                             {% endfor %}
@@ -125,7 +168,10 @@
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted">No purchases found.</p>
+                <div class="empty-state">
+                    <div class="icon"><i class="fas fa-shopping-basket"></i></div>
+                    <p>No purchases found.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -136,39 +182,45 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
-            <div class="card-header bg-warning text-dark">
-                <h5 class="mb-0">Purchase Details</h5>
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i>Purchase Details</h5>
+                <span class="badge bg-dark">{{ purchase_details|length }}</span>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if purchase_details %}
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Supplier</th>
-                                <th>Material</th>
-                                <th>Quantity</th>
-                                <th>Price</th>
-                                <th>Purchase Date</th>
-                                <th>Purchase ID</th>
+                                <th><i class="fas fa-sort-numeric-up me-1"></i>#</th>
+                                <th><i class="fas fa-user me-1"></i>Supplier</th>
+                                <th><i class="fas fa-box me-1"></i>Material</th>
+                                <th><i class="fas fa-plus-minus me-1"></i>Quantity</th>
+                                <th><i class="fas fa-tag me-1"></i>Price</th>
+                                <th><i class="fas fa-calendar-alt me-1"></i>Purchase Date</th>
+                                <th><i class="fas fa-hashtag me-1"></i>Purchase ID</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for detail in purchase_details %}
                             <tr>
-                                <td>{{ detail.supplier_name }}</td>
+                                <td><span class="badge bg-primary">{{ loop.index }}</span></td>
+                                <td><strong>{{ detail.supplier_name }}</strong></td>
                                 <td>{{ detail.material_name }}</td>
                                 <td>{{ detail.quantity }}</td>
-                                <td>KSh {{ detail.price|default(0) }}</td>
+                                <td><span class="text-success">KSh {{ detail.price|default(0) }}</span></td>
                                 <td>{{ detail.purchase_date }}</td>
-                                <td>{{ detail.purchase_id }}</td>
+                                <td><span class="badge bg-secondary">{{ detail.purchase_id }}</span></td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted">No purchase details found.</p>
+                <div class="empty-state">
+                    <div class="icon"><i class="fas fa-file-invoice"></i></div>
+                    <p>No purchase details found.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -179,31 +231,34 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="card">
-            <div class="card-header bg-danger text-white">
-                <h5 class="mb-0">Payment Report</h5>
+            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment Report</h5>
+                <span class="badge bg-light text-dark">{{ payment_report|length }}</span>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if payment_report %}
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
+                    <table class="table table-striped table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>Client</th>
-                                <th>Project</th>
-                                <th>Amount Paid</th>
-                                <th>Payment Date</th>
-                                <th>Method</th>
-                                <th>Status</th>
+                                <th><i class="fas fa-sort-numeric-up me-1"></i>#</th>
+                                <th><i class="fas fa-user me-1"></i>Client</th>
+                                <th><i class="fas fa-building me-1"></i>Project</th>
+                                <th><i class="fas fa-money-bill me-1"></i>Amount Paid</th>
+                                <th><i class="fas fa-calendar-alt me-1"></i>Payment Date</th>
+                                <th><i class="fas fa-credit-card me-1"></i>Method</th>
+                                <th><i class="fas fa-info-circle me-1"></i>Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for payment in payment_report %}
                             <tr>
-                                <td>{{ payment.client_name }}</td>
+                                <td><span class="badge bg-primary">{{ loop.index }}</span></td>
+                                <td><strong>{{ payment.client_name }}</strong></td>
                                 <td>{{ payment.project_name }}</td>
-                                <td>KSh {{ payment.amount_paid|default(0) }}</td>
+                                <td><span class="text-success">KSh {{ payment.amount_paid|default(0) }}</span></td>
                                 <td>{{ payment.payment_date }}</td>
-                                <td>{{ payment.method|default('N/A') }}</td>
+                                <td><span class="badge bg-info">{{ payment.method|default('N/A') }}</span></td>
                                 <td><span class="badge bg-{% if payment.status == 'completed' %}success{% elif payment.status == 'pending' %}warning{% else %}secondary{% endif %}">{{ payment.status|default('pending') }}</span></td>
                             </tr>
                             {% endfor %}
@@ -211,7 +266,10 @@
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted">No payment records found.</p>
+                <div class="empty-state">
+                    <div class="icon"><i class="fas fa-money-bill-alt"></i></div>
+                    <p>No payment records found.</p>
+                </div>
                 {% endif %}
             </div>
         </div>
