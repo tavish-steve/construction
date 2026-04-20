@@ -1,9 +1,17 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from psycopg2.extras import RealDictCursor
 import psycopg2
+import bcrypt
+import os
+import logging
 from database import (
     init_db_pool,
     close_all_connections,
     init_employee_tables,
+    init_admin_table,
+    get_admin_user,
+    create_admin_user,
     get_clients,
     insert_clients,
     get_employees,
@@ -26,10 +34,82 @@ from database import (
     get_project_materials,
     get_purchases_with_suppliers,
     get_purchase_details,
-    get_payment_report
+    get_payment_report,
+    get_connection,
+    return_connection
 )
 
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24).hex())
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+class User(UserMixin):
+    def __init__(self, user_id, password_hash):
+        self.id = user_id
+        self.password_hash = password_hash
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT id, password_hash FROM admin_users WHERE id = %s", (user_id,))
+        result = cur.fetchone()
+        cur.close()
+        if result:
+            return User(result['id'], result['password_hash'])
+    except Exception as e:
+        app.logger.error(f"Error loading user: {e}")
+    finally:
+        return_connection(conn)
+    return None
+
+# ============= AUTHENTICATION =============
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    error = None
+    if request.method == 'POST':
+        password = request.form.get('password')
+        
+        conn = None
+        try:
+            conn = get_connection()
+            cur = conn.cursor(cursor_factory=RealDictCursor)
+            cur.execute("SELECT id, password_hash FROM admin_users LIMIT 1")
+            result = cur.fetchone()
+            cur.close()
+            
+            if result and bcrypt.checkpw(password.encode('utf-8'), result['password_hash'].encode('utf-8')):
+                user = User(result['id'], result['password_hash'])
+                login_user(user)
+                flash('Logged in successfully!', 'success')
+                next_page = request.args.get('next')
+                return redirect(next_page or url_for('index'))
+            else:
+                error = 'Invalid password'
+        except Exception as e:
+            app.logger.error(f"Login error: {e}")
+            error = 'Invalid password'
+        finally:
+            return_connection(conn)
+    
+    return render_template('login.html', title='Login', error=error)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
 
 # Initialize database connection pool before first request
 @app.before_request
@@ -43,23 +123,28 @@ def before_request():
 # Home - Company Info Page
 @app.route('/')
 def index():
-    """Display company information on the home page"""
+    """Display login page first"""
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
     return render_template('index.html', title='Home')
 
 # Dashboard route (alias for home)
 @app.route('/dashboard')
+@login_required
 def dashboard():
     """Display the dashboard - same as home page"""
     return redirect(url_for('index'))
 
 # Clients
 @app.route('/clients')
+@login_required
 def clients():
     """Display all clients"""
     clients = get_clients()
     return render_template('clients.html', title='Clients', clients=clients)
 
 @app.route('/add_client', methods=['POST'])
+@login_required
 def add_client():
     """Add a new client"""
     name = request.form.get('name')
@@ -74,12 +159,14 @@ def add_client():
 
 # Employees
 @app.route('/employees')
+@login_required
 def employees():
     """Display all employees"""
     employees = get_employees()
     return render_template('employees.html', title='Employees', employees=employees)
 
 @app.route('/add_employee', methods=['POST'])
+@login_required
 def add_employee():
     """Add a new employee"""
     full_name = request.form.get('full_name')
@@ -96,6 +183,7 @@ def add_employee():
     return redirect(url_for('employees'))
 
 @app.route('/add_employee_payment', methods=['POST'])
+@login_required
 def add_employee_payment():
     """Record a payment to an employee"""
     employee_id = request.form.get('employee_id')
@@ -111,6 +199,7 @@ def add_employee_payment():
 
 # Projects
 @app.route('/projects')
+@login_required
 def projects():
     """Display projects with client information"""
     projects = get_projects()
@@ -118,6 +207,7 @@ def projects():
     return render_template('projects.html', title='Projects', projects=projects, clients=clients)
 
 @app.route('/add_project', methods=['POST'])
+@login_required
 def add_project():
     """Add a new project"""
     project_name = request.form.get('project_name')
@@ -137,12 +227,14 @@ def add_project():
 
 # Materials
 @app.route('/materials')
+@login_required
 def materials():
     """Display all materials"""
     materials = get_materials()
     return render_template('materials.html', title='Materials', materials=materials)
 
 @app.route('/add_material', methods=['POST'])
+@login_required
 def add_material():
     """Add a new material"""
     material_name = request.form.get('material_name')
@@ -159,6 +251,7 @@ def add_material():
 
 # Payments
 @app.route('/payments')
+@login_required
 def payments():
     """Display payment report"""
     payments = get_payments()
@@ -166,6 +259,7 @@ def payments():
     return render_template('payments.html', title='Payments', payments=payments, projects=projects)
 
 @app.route('/add_payment', methods=['POST'])
+@login_required
 def add_payment():
     """Add a new payment"""
     project_id = request.form.get('project_id')
@@ -182,6 +276,7 @@ def add_payment():
 
 # Purchases
 @app.route('/purchases')
+@login_required
 def purchases():
     """Display purchases with suppliers"""
     purchases = get_purchases()
@@ -190,6 +285,7 @@ def purchases():
     return render_template('purchases.html', title='Purchases', purchases=purchases, suppliers=suppliers, materials=materials)
 
 @app.route('/add_purchase', methods=['POST'])
+@login_required
 def add_purchase():
     """Add a new purchase with optional new supplier and material"""
     supplier_choice = request.form.get('supplier_choice')
@@ -234,6 +330,7 @@ def add_purchase():
 
 # Purchase Details
 @app.route('/purchase-details')
+@login_required
 def purchase_details_route():
     """Display detailed purchase information"""
     data = get_purchase_details()
@@ -241,6 +338,7 @@ def purchase_details_route():
 
 # Reports
 @app.route('/reports')
+@login_required
 def reports():
     """Display all reports"""
     projects_with_clients = get_projects_with_clients()
@@ -265,7 +363,14 @@ if __name__ == '__main__':
         init_db_pool()
         # Initialize employee tables
         init_employee_tables()
-        app.run(debug=True)
+        # Initialize admin table and create default admin if needed
+        init_admin_table()
+        admin = get_admin_user()
+        if not admin:
+            create_admin_user('admin', 'admin123')
+            logger.info("Created default admin user")
+        port = int(os.environ.get('PORT', 5000))
+        app.run(host='0.0.0.0', port=port, debug=False)
     finally:
         # Clean up connection pool on shutdown
         close_all_connections()
