@@ -3,6 +3,7 @@ from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 import os
 import logging
+import bcrypt
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 # Connection pool settings
 DB_CONFIG = {
-    'host': os.environ.get('DB_HOST', 'localhost'),
+    'host': os.environ.get('DB_HOST', '127.0.0.1'),
     'port': os.environ.get('DB_PORT', '5432'),
     'user': os.environ.get('DB_USER', 'postgres'),
     'password': os.environ.get('DB_PASSWORD', 'rty67jouj'),
@@ -722,6 +723,67 @@ def display_all_reports():
     display_purchases_with_suppliers()
     display_purchase_details()
     display_payment_report()
+
+# ============= ADMIN USERS =============
+def init_admin_table():
+    """Create admin_users table if it doesn't exist"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS admin_users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(100) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        cur.close()
+        logger.info("Created admin_users table")
+    except psycopg2.Error as e:
+        logger.error(f"Error creating admin table: {e}")
+    finally:
+        return_connection(conn)
+
+def create_admin_user(username, password):
+    """Create a new admin user with hashed password"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        cur.execute("""
+            INSERT INTO admin_users(username, password_hash) 
+            VALUES (%s, %s) 
+            RETURNING id
+        """, (username, password_hash))
+        result = cur.fetchone()
+        conn.commit()
+        cur.close()
+        return result
+    except psycopg2.Error as e:
+        logger.error(f"Error creating admin user: {e}")
+        return None
+    finally:
+        return_connection(conn)
+
+def get_admin_user():
+    """Get the admin user"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT id, username, password_hash FROM admin_users LIMIT 1")
+        result = cur.fetchone()
+        cur.close()
+        return result
+    except psycopg2.Error as e:
+        logger.error(f"Error getting admin user: {e}")
+        return None
+    finally:
+        return_connection(conn)
 
 # Test connection and display data
 if __name__ == "__main__":
