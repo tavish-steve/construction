@@ -769,19 +769,215 @@ def create_admin_user(username, password):
     finally:
         return_connection(conn)
 
-def get_admin_user():
-    """Get the admin user"""
+def get_admin_user(username=None):
+    """Get the admin user by username"""
     conn = None
     try:
         conn = get_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT id, username, password_hash FROM admin_users LIMIT 1")
+        if username:
+            cur.execute("SELECT id, username, password_hash FROM admin_users WHERE username = %s", (username,))
+        else:
+            cur.execute("SELECT id, username, password_hash FROM admin_users LIMIT 1")
         result = cur.fetchone()
         cur.close()
         return result
     except psycopg2.Error as e:
         logger.error(f"Error getting admin user: {e}")
         return None
+    finally:
+        return_connection(conn)
+
+def init_clients_table():
+    """Create clients table if it doesn't exist"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS clients (
+                client_id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                phone VARCHAR(50),
+                email VARCHAR(255),
+                address TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        cur.close()
+        logger.info("Created clients table")
+    except psycopg2.Error as e:
+        logger.error(f"Error creating clients table: {e}")
+    finally:
+        return_connection(conn)
+
+def init_suppliers_table():
+    """Create suppliers table if it doesn't exist"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS suppliers (
+                supplier_id SERIAL PRIMARY KEY,
+                supplier_name VARCHAR(255) NOT NULL,
+                phone VARCHAR(50),
+                email VARCHAR(255),
+                address TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        cur.close()
+        logger.info("Created suppliers table")
+    except psycopg2.Error as e:
+        logger.error(f"Error creating suppliers table: {e}")
+    finally:
+        return_connection(conn)
+
+def init_materials_table():
+    """Create materials table if it doesn't exist"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS materials (
+                material_id SERIAL PRIMARY KEY,
+                material_name VARCHAR(255) NOT NULL,
+                unit VARCHAR(50),
+                unit_price DECIMAL(10,2) DEFAULT 0,
+                stock_quantity INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        cur.close()
+        logger.info("Created materials table")
+    except psycopg2.Error as e:
+        logger.error(f"Error creating materials table: {e}")
+    finally:
+        return_connection(conn)
+
+def init_projects_table():
+    """Create projects table if it doesn't exist"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS projects (
+                project_id SERIAL PRIMARY KEY,
+                project_name VARCHAR(255) NOT NULL,
+                client_id INTEGER REFERENCES clients(client_id) ON DELETE SET NULL,
+                location VARCHAR(255),
+                start_date DATE,
+                end_date DATE,
+                budget DECIMAL(10,2) DEFAULT 0,
+                status VARCHAR(50) DEFAULT 'active',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        cur.close()
+        logger.info("Created projects table")
+    except psycopg2.Error as e:
+        logger.error(f"Error creating projects table: {e}")
+    finally:
+        return_connection(conn)
+
+def init_purchases_table():
+    """Create purchases table if it doesn't exist"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS purchases (
+                purchase_id SERIAL PRIMARY KEY,
+                supplier_id INTEGER REFERENCES suppliers(supplier_id) ON DELETE SET NULL,
+                purchase_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                total_amount DECIMAL(10,2) NOT NULL,
+                status VARCHAR(50) DEFAULT 'pending'
+            )
+        """)
+        conn.commit()
+        cur.close()
+        logger.info("Created purchases table")
+    except psycopg2.Error as e:
+        logger.error(f"Error creating purchases table: {e}")
+    finally:
+        return_connection(conn)
+
+def init_purchase_items_table():
+    """Create purchase_items table if it doesn't exist"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS purchase_items (
+                purchase_item_id SERIAL PRIMARY KEY,
+                purchase_id INTEGER REFERENCES purchases(purchase_id) ON DELETE CASCADE,
+                material_id INTEGER REFERENCES materials(material_id),
+                quantity INTEGER NOT NULL,
+                price DECIMAL(10,2) NOT NULL
+            )
+        """)
+        conn.commit()
+        cur.close()
+        logger.info("Created purchase_items table")
+    except psycopg2.Error as e:
+        logger.error(f"Error creating purchase_items table: {e}")
+    finally:
+        return_connection(conn)
+
+def init_payments_table():
+    """Create payments table if it doesn't exist"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS payments (
+                payment_id SERIAL PRIMARY KEY,
+                project_id INTEGER REFERENCES projects(project_id) ON DELETE SET NULL,
+                amount_paid DECIMAL(10,2) NOT NULL,
+                payment_date DATE NOT NULL,
+                method VARCHAR(50),
+                status VARCHAR(50) DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        cur.close()
+        logger.info("Created payments table")
+    except psycopg2.Error as e:
+        logger.error(f"Error creating payments table: {e}")
+    finally:
+        return_connection(conn)
+
+def init_project_materials_table():
+    """Create project_materials table if it doesn't exist"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS project_materials (
+                project_material_id SERIAL PRIMARY KEY,
+                project_id INTEGER REFERENCES projects(project_id) ON DELETE CASCADE,
+                material_id INTEGER REFERENCES materials(material_id),
+                quantity_used INTEGER NOT NULL,
+                used_on DATE
+            )
+        """)
+        conn.commit()
+        cur.close()
+        logger.info("Created project_materials table")
+    except psycopg2.Error as e:
+        logger.error(f"Error creating project_materials table: {e}")
     finally:
         return_connection(conn)
 

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Signup - Water Marc Builders{% endblock %}
+{% block page_title %}Create Account{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Signup</h5>
+      </div>
+      <div class="card-body">
+        <form action="{{ url_for('signup') }}" method="POST">
+          <div class="mb-3">
+            <label for="username" class="form-label"><i class="fas fa-user me-1"></i>Username</label>
+            <input type="text" class="form-control" id="username" name="username" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label"><i class="fas fa-key me-1"></i>Password</label>
+            <input type="password" class="form-control" id="password" name="password" required>
+          </div>
+          <div class="mb-3">
+            <label for="confirm_password" class="form-label"><i class="fas fa-key me-1"></i>Confirm Password</label>
+            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+          </div>
+          {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+          {% endif %}
+          {% if success %}
+            <div class="alert alert-success">{{ success }}</div>
+          {% endif %}
+          <button type="submit" class="btn btn-success w-100"><i class="fas fa-user-plus me-1"></i>Signup</button>
+        </form>
+        <div class="text-center mt-3">
+          Already have an account? <a href="{{ url_for('login') }}">Login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -5,11 +5,20 @@ import psycopg2
 import bcrypt
 import os
 import logging
+from datetime import datetime
 from database import (
     init_db_pool,
     close_all_connections,
     init_employee_tables,
     init_admin_table,
+    init_clients_table,
+    init_suppliers_table,
+    init_materials_table,
+    init_projects_table,
+    init_purchases_table,
+    init_purchase_items_table,
+    init_payments_table,
+    init_project_materials_table,
     get_admin_user,
     create_admin_user,
     get_clients,
@@ -48,9 +57,14 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+@app.context_processor
+def inject_current_year():
+    return {'current_year': datetime.now().year}
+
 class User(UserMixin):
-    def __init__(self, user_id, password_hash):
+    def __init__(self, user_id, username, password_hash):
         self.id = user_id
+        self.username = username
         self.password_hash = password_hash
 
 @login_manager.user_loader
@@ -59,11 +73,11 @@ def load_user(user_id):
     try:
         conn = get_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT id, password_hash FROM admin_users WHERE id = %s", (user_id,))
+        cur.execute("SELECT id, username, password_hash FROM admin_users WHERE id = %s", (user_id,))
         result = cur.fetchone()
         cur.close()
         if result:
-            return User(result['id'], result['password_hash'])
+            return User(result['id'], result['username'], result['password_hash'])
     except Exception as e:
         app.logger.error(f"Error loading user: {e}")
     finally:
@@ -71,6 +85,53 @@ def load_user(user_id):
     return None
 
 # ============= AUTHENTICATION =============
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    error = None
+    success = None
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if not username or not password:
+            error = 'Username and password are required'
+        elif password != confirm_password:
+            error = 'Passwords do not match'
+        elif len(password) < 4:
+            error = 'Password must be at least 4 characters'
+        else:
+            conn = None
+            try:
+                conn = get_connection()
+                cur = conn.cursor(cursor_factory=RealDictCursor)
+                
+                cur.execute("SELECT id FROM admin_users WHERE username = %s", (username,))
+                if cur.fetchone():
+                    error = 'Username already exists'
+                else:
+                    password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                    cur.execute("""
+                        INSERT INTO admin_users(username, password_hash) 
+                        VALUES (%s, %s) 
+                        RETURNING id
+                    """, (username, password_hash))
+                    result = cur.fetchone()
+                    conn.commit()
+                    cur.close()
+                    success = 'Account created! Please login with your credentials.'
+            except Exception as e:
+                app.logger.error(f"Signup error: {e}")
+                error = 'Error creating account'
+            finally:
+                return_connection(conn)
+    
+    return render_template('signup.html', title='Signup', error=error, success=success)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -78,27 +139,32 @@ def login():
     
     error = None
     if request.method == 'POST':
+        username = request.form.get('username')
         password = request.form.get('password')
+        
+        if not username:
+            error = 'Username is required'
+            return render_template('login.html', title='Login', error=error)
         
         conn = None
         try:
             conn = get_connection()
             cur = conn.cursor(cursor_factory=RealDictCursor)
-            cur.execute("SELECT id, password_hash FROM admin_users LIMIT 1")
+            cur.execute("SELECT id, username, password_hash FROM admin_users WHERE username = %s", (username,))
             result = cur.fetchone()
             cur.close()
             
             if result and bcrypt.checkpw(password.encode('utf-8'), result['password_hash'].encode('utf-8')):
-                user = User(result['id'], result['password_hash'])
+                user = User(result['id'], result['username'], result['password_hash'])
                 login_user(user)
                 flash('Logged in successfully!', 'success')
                 next_page = request.args.get('next')
                 return redirect(next_page or url_for('index'))
             else:
-                error = 'Invalid password'
+                error = 'Invalid username or password'
         except Exception as e:
             app.logger.error(f"Login error: {e}")
-            error = 'Invalid password'
+            error = 'Invalid username or password'
         finally:
             return_connection(conn)
     
@@ -363,6 +429,14 @@ if __name__ == '__main__':
         init_db_pool()
         # Initialize employee tables
         init_employee_tables()
+        init_clients_table()
+        init_suppliers_table()
+        init_materials_table()
+        init_projects_table()
+        init_project_materials_table()
+        init_purchases_table()
+        init_purchase_items_table()
+        init_payments_table()
         # Initialize admin table and create default admin if needed
         init_admin_table()
         admin = get_admin_user()
