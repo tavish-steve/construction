@@ -72,30 +72,102 @@
 </div>
 
 <!-- Purchases Table -->
-<div class="card">
+<div class="card mb-4">
     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>All Purchases</h5>
-        <span class="badge bg-light text-dark">{{ purchases|length }} Purchases</span>
+        <div class="d-flex align-items-center gap-3">
+            <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>All Purchases</h5>
+            <span class="badge bg-light text-dark">{{ purchases|length }} Purchases</span>
+        </div>
+        <div class="bulk-actions" style="display:none;">
+            <span class="text-light me-2">Selected: <span class="selected-count">0</span></span>
+            <form action="{{ url_for('delete_purchases_bulk') }}" method="POST" style="display:inline" onsubmit="return confirm('Are you sure you want to delete selected purchases? This cannot be undone.');">
+                <input type="hidden" name="purchase_ids[]" class="selected-ids">
+                <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash me-1"></i>Delete Selected</button>
+            </form>
+            <button class="btn btn-light btn-sm ms-2" onclick="deselectAll()">Cancel</button>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table id="purchasesTable" class="table table-striped table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th><i class="fas fa-hashtag me-1"></i>ID</th>
-                        <th><i class="fas fa-user me-1"></i>Supplier Name</th>
-                        <th><i class="fas fa-calendar-alt me-1"></i>Purchase Date</th>
-                        <th><i class="fas fa-money-bill me-1"></i>Total Amount</th>
-                    </tr>
-                </thead>
+                 <thead>
+                     <tr>
+                         <th style="width: 50px;">
+                             <div class="form-check">
+                                 <input class="form-check-input" type="checkbox" id="selectAllPurchases" onchange="toggleSelectAll('purchases')">
+                             </div>
+                         </th>
+                         <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                         <th><i class="fas fa-user me-1"></i>Supplier Name</th>
+                         <th><i class="fas fa-calendar-alt me-1"></i>Purchase Date</th>
+                         <th><i class="fas fa-money-bill me-1"></i>Total Amount</th>
+                     </tr>
+                 </thead>
                 <tbody>
                     {% for purchase in purchases %}
                     <tr>
+                        <td>
+                            <div class="form-check">
+                                <input class="form-check-input row-checkbox" type="checkbox" value="{{ purchase.purchase_id }}" data-type="purchases" onchange="rowSelected('purchases')">
+                            </div>
+                        </td>
                         <td><span class="badge bg-secondary">{{ purchase.purchase_id }}</span></td>
                         <td><strong>{{ purchase.supplier_name }}</strong></td>
                         <td>{{ purchase.purchase_date }}</td>
-                        <td><span class="text-success">KSh {{ purchase.total_amount|default(0) }}</span></td>
-                    </tr>
+                          <td><span class="text-success">KSh {{ purchase.total_amount|default(0) }}</span></td>
+                       </tr>
+                     {% endfor %}
+                   </tbody>
+              </table>
+          </div>
+      </div>
+  </div>
+
+  <!-- Suppliers Section -->
+<div class="card">
+    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            <h5 class="mb-0"><i class="fas fa-users me-2"></i>All Suppliers</h5>
+            <span class="badge bg-light text-dark">{{ suppliers|length }} Suppliers</span>
+        </div>
+        <div class="bulk-actions" style="display:none;">
+            <span class="text-light me-2">Selected: <span class="selected-count">0</span></span>
+            <form action="{{ url_for('delete_suppliers_bulk') }}" method="POST" style="display:inline" onsubmit="return confirm('Are you sure you want to delete selected suppliers? This cannot be undone.');">
+                <input type="hidden" name="supplier_ids[]" class="selected-ids">
+                <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash me-1"></i>Delete Selected</button>
+            </form>
+            <button class="btn btn-light btn-sm ms-2" onclick="deselectAll()">Cancel</button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table id="suppliersTable" class="table table-striped table-hover mb-0">
+                 <thead>
+                     <tr>
+                         <th style="width: 50px;">
+                             <div class="form-check">
+                                 <input class="form-check-input" type="checkbox" id="selectAllSuppliers" onchange="toggleSelectAll('suppliers')">
+                             </div>
+                         </th>
+                         <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                         <th><i class="fas fa-user me-1"></i>Supplier Name</th>
+                         <th><i class="fas fa-phone me-1"></i>Phone</th>
+                         <th><i class="fas fa-envelope me-1"></i>Email</th>
+                     </tr>
+                 </thead>
+                <tbody>
+                    {% for supplier in suppliers %}
+                    <tr>
+                        <td>
+                            <div class="form-check">
+                                <input class="form-check-input row-checkbox" type="checkbox" value="{{ supplier.supplier_id }}" data-type="suppliers" onchange="rowSelected('suppliers')">
+                            </div>
+                        </td>
+                        <td><span class="badge bg-secondary">{{ supplier.supplier_id }}</span></td>
+                        <td><strong>{{ supplier.supplier_name }}</strong></td>
+                        <td>{{ supplier.phone }}</td>
+                          <td>{{ supplier.email }}</td>
+                      </tr>
                     {% endfor %}
                 </tbody>
             </table>

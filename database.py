@@ -144,6 +144,38 @@ def init_employee_tables():
         return_connection(conn)
 
 # ============= CLIENTS =============
+def delete_client(client_id):
+    """Delete a client by ID"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM clients WHERE client_id = %s", (client_id,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error deleting client: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
+def delete_clients_bulk(client_ids):
+    """Delete multiple clients by IDs"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM clients WHERE client_id = ANY(%s)", (client_ids,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error bulk deleting clients: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
 def get_clients():
     conn = None
     try:
@@ -207,6 +239,44 @@ def get_employees():
     finally:
         return_connection(conn)
 
+def delete_employee(employee_id):
+    """Delete an employee by ID"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        # Delete employee payments first (no cascade in DB, so handle manually)
+        cur.execute("DELETE FROM employee_payments WHERE employee_id = %s", (employee_id,))
+        # Delete the employee
+        cur.execute("DELETE FROM employees WHERE employee_id = %s", (employee_id,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error deleting employee: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
+def delete_employees_bulk(employee_ids):
+    """Delete multiple employees by IDs"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        # Delete associated payments first
+        cur.execute("DELETE FROM employee_payments WHERE employee_id = ANY(%s)", (employee_ids,))
+        # Delete the employees
+        cur.execute("DELETE FROM employees WHERE employee_id = ANY(%s)", (employee_ids,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error bulk deleting employees: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
 def insert_employees(values):
     conn = None
     try:
@@ -261,6 +331,38 @@ def insert_employee_payment(values):
         return_connection(conn)
 
 # ============= PROJECTS =============
+def delete_project(project_id):
+    """Delete a project by ID"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM projects WHERE project_id = %s", (project_id,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error deleting project: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
+def delete_projects_bulk(project_ids):
+    """Delete multiple projects by IDs"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM projects WHERE project_id = ANY(%s)", (project_ids,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error bulk deleting projects: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
 def get_projects():
     conn = None
     try:
@@ -301,6 +403,38 @@ def insert_project(values):
         return_connection(conn)
 
 # ============= MATERIALS =============
+def delete_material(material_id):
+    """Delete a material by ID"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM materials WHERE material_id = %s", (material_id,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error deleting material: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
+def delete_materials_bulk(material_ids):
+    """Delete multiple materials by IDs"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM materials WHERE material_id = ANY(%s)", (material_ids,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error bulk deleting materials: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
 def get_materials():
     conn = None
     try:
@@ -332,6 +466,38 @@ def insert_materials(values):
         return_connection(conn)
 
 # ============= SUPPLIERS =============
+def delete_supplier(supplier_id):
+    """Delete a supplier by ID"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM suppliers WHERE supplier_id = %s", (supplier_id,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error deleting supplier: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
+def delete_suppliers_bulk(supplier_ids):
+    """Delete multiple suppliers by IDs"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM suppliers WHERE supplier_id = ANY(%s)", (supplier_ids,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error bulk deleting suppliers: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
 def get_suppliers():
     conn = None
     try:
@@ -363,6 +529,38 @@ def insert_suppliers(values):
         return_connection(conn)
 
 # ============= PURCHASES =============
+def delete_purchase(purchase_id):
+    """Delete a purchase by ID (cascade deletes purchase items)"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM purchases WHERE purchase_id = %s", (purchase_id,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error deleting purchase: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
+def delete_purchases_bulk(purchase_ids):
+    """Delete multiple purchases by IDs (cascade deletes purchase items)"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM purchases WHERE purchase_id = ANY(%s)", (purchase_ids,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error bulk deleting purchases: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
 def get_purchases():
     conn = None
     try:
@@ -390,6 +588,7 @@ def insert_purchases(values):
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("INSERT INTO purchases(supplier_id, total_amount) VALUES (%s, %s) RETURNING purchase_id", values)
         result = cur.fetchone()
+        conn.commit()
         cur.close()
         return result
     except psycopg2.Error as e:
@@ -426,6 +625,7 @@ def insert_purchase_items(values):
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("INSERT INTO purchase_items(purchase_id, material_id, quantity, price) VALUES (%s, %s, %s, %s) RETURNING purchase_item_id", values)
         result = cur.fetchone()
+        conn.commit()
         cur.close()
         return result
     except psycopg2.Error as e:
@@ -435,6 +635,38 @@ def insert_purchase_items(values):
         return_connection(conn)
 
 # ============= PAYMENTS =============
+def delete_payment(payment_id):
+    """Delete a payment by ID"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM payments WHERE payment_id = %s", (payment_id,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error deleting payment: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
+def delete_payments_bulk(payment_ids):
+    """Delete multiple payments by IDs"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM payments WHERE payment_id = ANY(%s)", (payment_ids,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error bulk deleting payments: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
 def get_payments():
     conn = None
     try:
@@ -464,6 +696,7 @@ def insert_payment(values):
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("INSERT INTO payments(project_id, amount_paid, payment_date, method) VALUES (%s, %s, %s, %s) RETURNING payment_id", values)
         result = cur.fetchone()
+        conn.commit()
         cur.close()
         return result
     except psycopg2.Error as e:

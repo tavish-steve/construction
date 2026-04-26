@@ -23,22 +23,28 @@ from database import (
     create_admin_user,
     get_clients,
     insert_clients,
+    delete_clients_bulk as delete_clients_bulk_db,
     get_employees,
     insert_employees,
     get_employee_payments,
     insert_employee_payment,
+    delete_employees_bulk as delete_employees_bulk_db,
     get_projects,
     insert_project,
+    delete_projects_bulk as delete_projects_bulk_db,
     get_materials,
     insert_materials,
+    delete_materials_bulk as delete_materials_bulk_db,
     get_payments,
     insert_payment,
+    delete_payments_bulk as delete_payments_bulk_db,
     get_purchases,
     insert_purchases,
     get_purchase_items,
     insert_purchase_items,
     get_suppliers,
     insert_suppliers,
+    delete_suppliers_bulk as delete_suppliers_bulk_db,
     get_projects_with_clients,
     get_project_materials,
     get_purchases_with_suppliers,
@@ -223,6 +229,26 @@ def add_client():
     
     return redirect(url_for('clients'))
 
+@app.route('/delete_clients_bulk', methods=['POST'])
+@login_required
+def delete_clients_bulk():
+    """Delete multiple clients"""
+    client_ids = [int(cid) for cid in request.form.get('client_ids[]', '').split(',') if cid.isdigit()]
+
+    if client_ids:
+        delete_clients_bulk_db(client_ids)
+    return redirect(url_for('clients'))
+
+@app.route('/delete_employees_bulk', methods=['POST'])
+@login_required
+def delete_employees_bulk():
+    """Delete multiple employees"""
+    employee_ids = [int(eid) for eid in request.form.get('employee_ids[]', '').split(',') if eid.isdigit()]
+
+    if employee_ids:
+        delete_employees_bulk_db(employee_ids)
+    return redirect(url_for('employees'))
+
 # Employees
 @app.route('/employees')
 @login_required
@@ -291,6 +317,16 @@ def add_project():
     
     return redirect(url_for('projects'))
 
+@app.route('/delete_projects_bulk', methods=['POST'])
+@login_required
+def delete_projects_bulk():
+    """Delete multiple projects"""
+    project_ids = [int(pid) for pid in request.form.get('project_ids[]', '').split(',') if pid.isdigit()]
+
+    if project_ids:
+        delete_projects_bulk_db(project_ids)
+    return redirect(url_for('projects'))
+
 # Materials
 @app.route('/materials')
 @login_required
@@ -315,6 +351,16 @@ def add_material():
     
     return redirect(url_for('materials'))
 
+@app.route('/delete_materials_bulk', methods=['POST'])
+@login_required
+def delete_materials_bulk():
+    """Delete multiple materials"""
+    material_ids = [int(mid) for mid in request.form.get('material_ids[]', '').split(',') if mid.isdigit()]
+
+    if material_ids:
+        delete_materials_bulk_db(material_ids)
+    return redirect(url_for('materials'))
+
 # Payments
 @app.route('/payments')
 @login_required
@@ -337,7 +383,18 @@ def add_payment():
         project_id_int = int(project_id) if project_id else None
         amount_float = float(amount_paid)
         insert_payment((project_id_int, amount_float, payment_date, method))
+        flash(f'Payment of KSh {amount_paid} recorded successfully! <a href="{url_for("reports")}">View in Reports</a>', 'success')
     
+    return redirect(url_for('payments'))
+
+@app.route('/delete_payments_bulk', methods=['POST'])
+@login_required
+def delete_payments_bulk():
+    """Delete multiple payments"""
+    payment_ids = [int(pid) for pid in request.form.get('payment_ids[]', '').split(',') if pid.isdigit()]
+
+    if payment_ids:
+        delete_payments_bulk_db(payment_ids)
     return redirect(url_for('payments'))
 
 # Purchases
@@ -391,7 +448,28 @@ def add_purchase():
             purchase_id = purchase_result.get('purchase_id')
             # Insert purchase item
             insert_purchase_items((purchase_id, material_id, quantity, unit_price))
+            flash(f'Purchase of KSh {total_amount} recorded successfully! <a href="{url_for("reports")}">View in Reports</a>', 'success')
     
+    return redirect(url_for('purchases'))
+
+@app.route('/delete_purchases_bulk', methods=['POST'])
+@login_required
+def delete_purchases_bulk():
+    """Delete multiple purchases"""
+    purchase_ids = [int(pid) for pid in request.form.get('purchase_ids[]', '').split(',') if pid.isdigit()]
+
+    if purchase_ids:
+        delete_purchases_bulk_db(purchase_ids)
+    return redirect(url_for('purchases'))
+
+@app.route('/delete_suppliers_bulk', methods=['POST'])
+@login_required
+def delete_suppliers_bulk():
+    """Delete multiple suppliers"""
+    supplier_ids = [int(sid) for sid in request.form.get('supplier_ids[]', '').split(',') if sid.isdigit()]
+
+    if supplier_ids:
+        delete_suppliers_bulk_db(supplier_ids)
     return redirect(url_for('purchases'))
 
 # Purchase Details

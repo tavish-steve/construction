@@ -107,5 +107,63 @@
       integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
       crossorigin="anonymous"
     ></script>
+    <!-- Bulk Selection Scripts -->
+    <script>
+    function rowSelected(type) {
+        const checkboxes = document.querySelectorAll('.row-checkbox[data-type="' + type + '"]');
+        const checked = document.querySelectorAll('.row-checkbox[data-type="' + type + '"]:checked');
+        const bulkActions = document.querySelector('.bulk-actions');
+        const selectAll = document.getElementById('selectAll' + type.charAt(0).toUpperCase() + type.slice(1));
+        
+        if (checked.length > 0) {
+            bulkActions.style.display = 'flex';
+            bulkActions.querySelector('.selected-count').textContent = checked.length;
+            
+            // Collect selected IDs
+            const selectedIds = Array.from(checked).map(cb => cb.value);
+            bulkActions.querySelector('.selected-ids').value = selectedIds.join(',');
+            
+            // Update select all checkbox
+            if (selectAll) {
+                selectAll.checked = (checked.length === checkboxes.length);
+            }
+        } else {
+            bulkActions.style.display = 'none';
+            if (selectAll) {
+                selectAll.checked = false;
+            }
+        }
+    }
+
+    function toggleSelectAll(type) {
+        const selectAll = document.getElementById('selectAll' + type.charAt(0).toUpperCase() + type.slice(1));
+        const checkboxes = document.querySelectorAll('.row-checkbox[data-type="' + type + '"]');
+        checkboxes.forEach(cb => {
+            cb.checked = selectAll.checked;
+        });
+        rowSelected(type);
+    }
+
+    function deselectAll() {
+        const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+        checkboxes.forEach(cb => cb.checked = false);
+        
+        const selectAlls = document.querySelectorAll('.form-check-input[id^="selectAll"]');
+        selectAlls.forEach(sa => sa.checked = false);
+        
+        const bulkActions = document.querySelectorAll('.bulk-actions');
+        bulkActions.forEach(ba => ba.style.display = 'none');
+    }
+
+    // Close bulk actions when form is submitted (page will reload)
+    document.addEventListener('DOMContentLoaded', function() {
+        const forms = document.querySelectorAll('.bulk-actions form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function() {
+                deselectAll();
+            });
+        });
+    });
+    </script>
   </body>
 </html>

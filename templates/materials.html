@@ -37,25 +37,45 @@
 <!-- Materials Table -->
 <div class="card">
     <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>All Materials</h5>
-        <span class="badge bg-light text-dark">{{ materials|length }} Materials</span>
+        <div class="d-flex align-items-center gap-3">
+            <h5 class="mb-0"><i class="fas fa-boxes me-2"></i>All Materials</h5>
+            <span class="badge bg-light text-dark">{{ materials|length }} Materials</span>
+        </div>
+        <div class="bulk-actions" style="display:none;">
+            <span class="text-light me-2">Selected: <span class="selected-count">0</span></span>
+            <form action="{{ url_for('delete_materials_bulk') }}" method="POST" style="display:inline" onsubmit="return confirm('Are you sure you want to delete selected materials? This cannot be undone.');">
+                <input type="hidden" name="material_ids[]" class="selected-ids">
+                <button type="submit" class="btn btn-danger btn-sm"><i class="fas fa-trash me-1"></i>Delete Selected</button>
+            </form>
+            <button class="btn btn-light btn-sm ms-2" onclick="deselectAll()">Cancel</button>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table id="materialsTable" class="table table-striped table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th><i class="fas fa-hashtag me-1"></i>ID</th>
-                        <th><i class="fas fa-box me-1"></i>Material Name</th>
-                        <th><i class="fas fa-balance-scale me-1"></i>Unit</th>
-                        <th><i class="fas fa-tag me-1"></i>Unit Price</th>
-                        <th><i class="fas fa-cubes me-1"></i>Stock Quantity</th>
-                        <th><i class="fas fa-clock me-1"></i>Created</th>
-                    </tr>
-                </thead>
+                 <thead>
+                     <tr>
+                         <th style="width: 50px;">
+                             <div class="form-check">
+                                 <input class="form-check-input" type="checkbox" id="selectAllMaterials" onchange="toggleSelectAll('materials')">
+                             </div>
+                         </th>
+                         <th><i class="fas fa-hashtag me-1"></i>ID</th>
+                         <th><i class="fas fa-box me-1"></i>Material Name</th>
+                         <th><i class="fas fa-balance-scale me-1"></i>Unit</th>
+                         <th><i class="fas fa-tag me-1"></i>Unit Price</th>
+                         <th><i class="fas fa-cubes me-1"></i>Stock Quantity</th>
+                         <th><i class="fas fa-clock me-1"></i>Created</th>
+                     </tr>
+                 </thead>
                 <tbody>
                     {% for material in materials %}
                     <tr>
+                        <td>
+                            <div class="form-check">
+                                <input class="form-check-input row-checkbox" type="checkbox" value="{{ material.material_id }}" data-type="materials" onchange="rowSelected('materials')">
+                            </div>
+                        </td>
                         <td><span class="badge bg-secondary">{{ material.material_id }}</span></td>
                         <td><strong>{{ material.material_name }}</strong></td>
                         <td>{{ material.unit }}</td>
@@ -66,8 +86,8 @@
                                 {{ material.stock_quantity }}
                             </span>
                         </td>
-                        <td><small class="text-muted">{{ material.created_at }}</small></td>
-                    </tr>
+                          <td><small class="text-muted">{{ material.created_at }}</small></td>
+                      </tr>
                     {% endfor %}
                 </tbody>
             </table>
