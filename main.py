@@ -1,8 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+﻿from flask import Flask, render_template, request, redirect, url_for, flash
 from psycopg2.extras import RealDictCursor
 import psycopg2
-import bcrypt
 import os
 import logging
 from datetime import datetime
@@ -10,17 +8,6 @@ from database import (
     init_db_pool,
     close_all_connections,
     init_employee_tables,
-    init_admin_table,
-    init_clients_table,
-    init_suppliers_table,
-    init_materials_table,
-    init_projects_table,
-    init_purchases_table,
-    init_purchase_items_table,
-    init_payments_table,
-    init_project_materials_table,
-    get_admin_user,
-    create_admin_user,
     get_clients,
     insert_clients,
     delete_clients_bulk as delete_clients_bulk_db,
@@ -51,7 +38,15 @@ from database import (
     get_purchase_details,
     get_payment_report,
     get_connection,
-    return_connection
+    return_connection,
+    init_clients_table,
+    init_suppliers_table,
+    init_materials_table,
+    init_projects_table,
+    init_project_materials_table,
+    init_purchases_table,
+    init_purchase_items_table,
+    init_payments_table
 )
 
 logger = logging.getLogger(__name__)
@@ -59,438 +54,224 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24).hex())
 
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-
 @app.context_processor
 def inject_current_year():
     return {'current_year': datetime.now().year}
 
-class User(UserMixin):
-    def __init__(self, user_id, username, password_hash):
-        self.id = user_id
-        self.username = username
-        self.password_hash = password_hash
-
-@login_manager.user_loader
-def load_user(user_id):
-    conn = None
-    try:
-        conn = get_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT id, username, password_hash FROM admin_users WHERE id = %s", (user_id,))
-        result = cur.fetchone()
-        cur.close()
-        if result:
-            return User(result['id'], result['username'], result['password_hash'])
-    except Exception as e:
-        app.logger.error(f"Error loading user: {e}")
-    finally:
-        return_connection(conn)
-    return None
-
-# ============= AUTHENTICATION =============
-@app.route('/signup', methods=['GET', 'POST'])
-def signup():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-    
-    error = None
-    success = None
-    
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
-        
-        if not username or not password:
-            error = 'Username and password are required'
-        elif password != confirm_password:
-            error = 'Passwords do not match'
-        elif len(password) < 4:
-            error = 'Password must be at least 4 characters'
-        else:
-            conn = None
-            try:
-                conn = get_connection()
-                cur = conn.cursor(cursor_factory=RealDictCursor)
-                
-                cur.execute("SELECT id FROM admin_users WHERE username = %s", (username,))
-                if cur.fetchone():
-                    error = 'Username already exists'
-                else:
-                    password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-                    cur.execute("""
-                        INSERT INTO admin_users(username, password_hash) 
-                        VALUES (%s, %s) 
-                        RETURNING id
-                    """, (username, password_hash))
-                    result = cur.fetchone()
-                    conn.commit()
-                    cur.close()
-                    success = 'Account created! Please login with your credentials.'
-            except Exception as e:
-                app.logger.error(f"Signup error: {e}")
-                error = 'Error creating account'
-            finally:
-                return_connection(conn)
-    
-    return render_template('signup.html', title='Signup', error=error, success=success)
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-    
-    error = None
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        if not username:
-            error = 'Username is required'
-            return render_template('login.html', title='Login', error=error)
-        
-        conn = None
-        try:
-            conn = get_connection()
-            cur = conn.cursor(cursor_factory=RealDictCursor)
-            cur.execute("SELECT id, username, password_hash FROM admin_users WHERE username = %s", (username,))
-            result = cur.fetchone()
-            cur.close()
-            
-            if result and bcrypt.checkpw(password.encode('utf-8'), result['password_hash'].encode('utf-8')):
-                user = User(result['id'], result['username'], result['password_hash'])
-                login_user(user)
-                flash('Logged in successfully!', 'success')
-                next_page = request.args.get('next')
-                return redirect(next_page or url_for('index'))
-            else:
-                error = 'Invalid username or password'
-        except Exception as e:
-            app.logger.error(f"Login error: {e}")
-            error = 'Invalid username or password'
-        finally:
-            return_connection(conn)
-    
-    return render_template('login.html', title='Login', error=error)
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    flash('You have been logged out.', 'info')
-    return redirect(url_for('login'))
-
-# Initialize database connection pool before first request
 @app.before_request
 def before_request():
-    """Ensure database pool is initialized before each request"""
     try:
         init_db_pool()
     except Exception as e:
         app.logger.error(f"Database pool initialization failed: {e}")
 
-# Home - Company Info Page
 @app.route('/')
 def index():
-    """Display login page first"""
-    if not current_user.is_authenticated:
-        return redirect(url_for('login'))
     return render_template('index.html', title='Home')
 
-# Dashboard route (alias for home)
 @app.route('/dashboard')
-@login_required
 def dashboard():
-    """Display the dashboard - same as home page"""
     return redirect(url_for('index'))
 
-# Clients
 @app.route('/clients')
-@login_required
 def clients():
-    """Display all clients"""
     clients = get_clients()
     return render_template('clients.html', title='Clients', clients=clients)
 
 @app.route('/add_client', methods=['POST'])
-@login_required
 def add_client():
-    """Add a new client"""
     name = request.form.get('name')
     phone = request.form.get('phone')
     email = request.form.get('email')
     address = request.form.get('address')
-    
     if name:
         insert_clients((name, phone, email, address))
-    
     return redirect(url_for('clients'))
 
 @app.route('/delete_clients_bulk', methods=['POST'])
-@login_required
 def delete_clients_bulk():
-    """Delete multiple clients"""
     client_ids = [int(cid) for cid in request.form.get('client_ids[]', '').split(',') if cid.isdigit()]
-
     if client_ids:
         delete_clients_bulk_db(client_ids)
     return redirect(url_for('clients'))
 
 @app.route('/delete_employees_bulk', methods=['POST'])
-@login_required
 def delete_employees_bulk():
-    """Delete multiple employees"""
     employee_ids = [int(eid) for eid in request.form.get('employee_ids[]', '').split(',') if eid.isdigit()]
-
     if employee_ids:
         delete_employees_bulk_db(employee_ids)
     return redirect(url_for('employees'))
 
-# Employees
 @app.route('/employees')
-@login_required
 def employees():
-    """Display all employees"""
     employees = get_employees()
     return render_template('employees.html', title='Employees', employees=employees)
 
 @app.route('/add_employee', methods=['POST'])
-@login_required
 def add_employee():
-    """Add a new employee"""
     full_name = request.form.get('full_name')
     role = request.form.get('role')
     phone = request.form.get('phone')
     wage_per_day = request.form.get('wage_per_day')
     total_expected = request.form.get('total_expected')
-    
     if full_name:
         wage_float = float(wage_per_day) if wage_per_day else 0.0
         total_float = float(total_expected) if total_expected else 0.0
         insert_employees((full_name, role, phone, wage_float, total_float))
-    
     return redirect(url_for('employees'))
 
 @app.route('/add_employee_payment', methods=['POST'])
-@login_required
 def add_employee_payment():
-    """Record a payment to an employee"""
     employee_id = request.form.get('employee_id')
     amount_paid = request.form.get('amount_paid')
     payment_date = request.form.get('payment_date')
-    
     if employee_id and amount_paid:
         employee_id_int = int(employee_id)
         amount_float = float(amount_paid)
         insert_employee_payment((employee_id_int, amount_float, payment_date))
-    
     return redirect(url_for('employees'))
 
-# Projects
 @app.route('/projects')
-@login_required
 def projects():
-    """Display projects with client information"""
     projects = get_projects()
     clients = get_clients()
     return render_template('projects.html', title='Projects', projects=projects, clients=clients)
 
 @app.route('/add_project', methods=['POST'])
-@login_required
 def add_project():
-    """Add a new project"""
     project_name = request.form.get('project_name')
     client_id = request.form.get('client_id')
     location = request.form.get('location')
     start_date = request.form.get('start_date')
     end_date = request.form.get('end_date')
     budget = request.form.get('budget')
-    status = 'active'  # Default status
-    
+    status = 'active'
     if project_name:
         client_id_int = int(client_id) if client_id else None
         budget_float = float(budget) if budget else 0.0
         insert_project((project_name, client_id_int, location, start_date, end_date, budget_float, status))
-    
     return redirect(url_for('projects'))
 
 @app.route('/delete_projects_bulk', methods=['POST'])
-@login_required
 def delete_projects_bulk():
-    """Delete multiple projects"""
     project_ids = [int(pid) for pid in request.form.get('project_ids[]', '').split(',') if pid.isdigit()]
-
     if project_ids:
         delete_projects_bulk_db(project_ids)
     return redirect(url_for('projects'))
 
-# Materials
 @app.route('/materials')
-@login_required
 def materials():
-    """Display all materials"""
     materials = get_materials()
     return render_template('materials.html', title='Materials', materials=materials)
 
 @app.route('/add_material', methods=['POST'])
-@login_required
 def add_material():
-    """Add a new material"""
     material_name = request.form.get('material_name')
     unit = request.form.get('unit')
     unit_price = request.form.get('unit_price')
     stock_quantity = request.form.get('stock_quantity')
-    
     if material_name:
         unit_price_float = float(unit_price) if unit_price else 0.0
         stock_int = int(stock_quantity) if stock_quantity else 0
         insert_materials((material_name, unit, unit_price_float, stock_int))
-    
     return redirect(url_for('materials'))
 
 @app.route('/delete_materials_bulk', methods=['POST'])
-@login_required
 def delete_materials_bulk():
-    """Delete multiple materials"""
     material_ids = [int(mid) for mid in request.form.get('material_ids[]', '').split(',') if mid.isdigit()]
-
     if material_ids:
         delete_materials_bulk_db(material_ids)
     return redirect(url_for('materials'))
 
-# Payments
 @app.route('/payments')
-@login_required
 def payments():
-    """Display payment report"""
     payments = get_payments()
     projects = get_projects()
     return render_template('payments.html', title='Payments', payments=payments, projects=projects)
 
 @app.route('/add_payment', methods=['POST'])
-@login_required
 def add_payment():
-    """Add a new payment"""
     project_id = request.form.get('project_id')
     amount_paid = request.form.get('amount_paid')
     payment_date = request.form.get('payment_date')
     method = request.form.get('method')
-    
     if amount_paid:
         project_id_int = int(project_id) if project_id else None
         amount_float = float(amount_paid)
         insert_payment((project_id_int, amount_float, payment_date, method))
         flash(f'Payment of KSh {amount_paid} recorded successfully! <a href="{url_for("reports")}">View in Reports</a>', 'success')
-    
     return redirect(url_for('payments'))
 
 @app.route('/delete_payments_bulk', methods=['POST'])
-@login_required
 def delete_payments_bulk():
-    """Delete multiple payments"""
     payment_ids = [int(pid) for pid in request.form.get('payment_ids[]', '').split(',') if pid.isdigit()]
-
     if payment_ids:
         delete_payments_bulk_db(payment_ids)
     return redirect(url_for('payments'))
 
-# Purchases
 @app.route('/purchases')
-@login_required
 def purchases():
-    """Display purchases with suppliers"""
     purchases = get_purchases()
     suppliers = get_suppliers()
     materials = get_materials()
     return render_template('purchases.html', title='Purchases', purchases=purchases, suppliers=suppliers, materials=materials)
 
 @app.route('/add_purchase', methods=['POST'])
-@login_required
 def add_purchase():
-    """Add a new purchase with optional new supplier and material"""
     supplier_choice = request.form.get('supplier_choice')
-    
     supplier_id = None
-    
     if supplier_choice == 'new':
-        # Create new supplier
         new_supplier_name = request.form.get('new_supplier_name')
         new_supplier_phone = request.form.get('new_supplier_phone')
         new_supplier_email = request.form.get('new_supplier_email')
-        
         if new_supplier_name:
             supplier_result = insert_suppliers((new_supplier_name, new_supplier_phone, new_supplier_email, ''))
             if supplier_result:
                 supplier_id = supplier_result.get('supplier_id')
     else:
-        # Use existing supplier
         supplier_id = request.form.get('supplier_id')
         supplier_id = int(supplier_id) if supplier_id else None
-    
-    # Get material and purchase details
     material_id = request.form.get('material_id')
     quantity = request.form.get('quantity')
     unit_price = request.form.get('unit_price')
-    
     if supplier_id and material_id and quantity and unit_price:
         material_id = int(material_id)
         quantity = int(quantity)
         unit_price = float(unit_price)
         total_amount = quantity * unit_price
-        
-        # Insert purchase
         purchase_result = insert_purchases((supplier_id, total_amount))
-        
         if purchase_result:
             purchase_id = purchase_result.get('purchase_id')
-            # Insert purchase item
             insert_purchase_items((purchase_id, material_id, quantity, unit_price))
             flash(f'Purchase of KSh {total_amount} recorded successfully! <a href="{url_for("reports")}">View in Reports</a>', 'success')
-    
     return redirect(url_for('purchases'))
 
 @app.route('/delete_purchases_bulk', methods=['POST'])
-@login_required
 def delete_purchases_bulk():
-    """Delete multiple purchases"""
     purchase_ids = [int(pid) for pid in request.form.get('purchase_ids[]', '').split(',') if pid.isdigit()]
-
     if purchase_ids:
         delete_purchases_bulk_db(purchase_ids)
     return redirect(url_for('purchases'))
 
 @app.route('/delete_suppliers_bulk', methods=['POST'])
-@login_required
 def delete_suppliers_bulk():
-    """Delete multiple suppliers"""
     supplier_ids = [int(sid) for sid in request.form.get('supplier_ids[]', '').split(',') if sid.isdigit()]
-
     if supplier_ids:
         delete_suppliers_bulk_db(supplier_ids)
     return redirect(url_for('purchases'))
 
-# Purchase Details
 @app.route('/purchase-details')
-@login_required
 def purchase_details_route():
-    """Display detailed purchase information"""
     data = get_purchase_details()
     return render_template('purchase_details.html', title='Purchase Details', purchase_details=data)
 
-# Reports
 @app.route('/reports')
-@login_required
 def reports():
-    """Display all reports"""
     projects_with_clients = get_projects_with_clients()
     project_materials = get_project_materials()
     purchases_with_suppliers = get_purchases_with_suppliers()
     purchase_details = get_purchase_details()
     payment_report = get_payment_report()
-    
     return render_template(
         'reports.html',
         title='Reports',
@@ -503,9 +284,7 @@ def reports():
 
 if __name__ == '__main__':
     try:
-        # Initialize pool before running
         init_db_pool()
-        # Initialize employee tables
         init_employee_tables()
         init_clients_table()
         init_suppliers_table()
@@ -515,14 +294,7 @@ if __name__ == '__main__':
         init_purchases_table()
         init_purchase_items_table()
         init_payments_table()
-        # Initialize admin table and create default admin if needed
-        init_admin_table()
-        admin = get_admin_user()
-        if not admin:
-            create_admin_user('admin', 'admin123')
-            logger.info("Created default admin user")
         port = int(os.environ.get('PORT', 5000))
         app.run(host='0.0.0.0', port=port, debug=False)
     finally:
-        # Clean up connection pool on shutdown
         close_all_connections()
