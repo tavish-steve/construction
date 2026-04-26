@@ -52,7 +52,7 @@ from database import (
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', os.urandom(24).hex())
+app.secret_key = qwerty11
 
 @app.context_processor
 def inject_current_year():
