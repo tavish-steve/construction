@@ -1155,6 +1155,6 @@ if __name__ == "__main__":
     # Initialize the pool first
     init_db_pool()
     print("Database connection successful!")
-    display_all_data()
+    # display_all_data()
     # Close pool when done
     close_all_connections()
