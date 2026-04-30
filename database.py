@@ -124,7 +124,7 @@ def init_employee_tables():
             
         logger.info("Created employees table")
         
-        # Create employee_payments table if it doesn't exist
+        #  employee_payments table 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS employee_payments (
                 payment_id SERIAL PRIMARY KEY,
@@ -244,7 +244,7 @@ def delete_employee(employee_id):
     try:
         conn = get_connection()
         cur = conn.cursor()
-        # Delete employee payments first (no cascade in DB, so handle manually)
+        # Delete employee payments first
         cur.execute("DELETE FROM employee_payments WHERE employee_id = %s", (employee_id,))
         # Delete the employee
         cur.execute("DELETE FROM employees WHERE employee_id = %s", (employee_id,))
@@ -956,7 +956,7 @@ def display_all_reports():
     display_purchase_details()
     display_payment_report()
 
-# ============= ADMIN USERS =============
+
 def init_clients_table():
     """Create clients table if it doesn't exist"""
     conn = None
@@ -1155,6 +1155,5 @@ if __name__ == "__main__":
     # Initialize the pool first
     init_db_pool()
     print("Database connection successful!")
-    # display_all_data()
     # Close pool when done
     close_all_connections()
