@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 DB_CONFIG = {
     'host': os.environ.get('DB_HOST', '127.0.0.1'),
     'port': os.environ.get('DB_PORT', '5432'),
-    'user': os.environ.get('DB_USER', 'construction_db_icun'),
-    'password': os.environ.get('DB_PASSWORD', 'GKTf3gF3pnlubZiSriiRLizT3U4hN5da'),
-    'database': os.environ.get('DB_NAME', 'construction_db_icun_user')
+    'user': os.environ.get('DB_USER', 'posgres'),
+    'password': os.environ.get('DB_PASSWORD', 'rty67jouj'),
+    'database': os.environ.get('DB_NAME', 'construction_db')
 }
 
 # Initialize connection pool (None until first use)
@@ -1154,6 +1154,15 @@ def init_project_materials_table():
 if __name__ == "__main__":
     # Initialize the pool first
     init_db_pool()
+    init_employee_tables()
+    init_clients_table()
+    init_suppliers_table()
+    init_materials_table()
+    init_projects_table()
+    init_project_materials_table()
+    init_purchases_table()
+    init_purchase_items_table()
+    init_payments_table()
     print("Database connection successful!")
     # Close pool when done
     close_all_connections()
