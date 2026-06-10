@@ -1,4 +1,4 @@
-"""Bootstrap the database schema for Render deployments. creates the tables before hand."""
+
 
 from database import (
     close_all_connections,
