@@ -52,6 +52,23 @@ from database import (
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+def initialize_database():
+    try:
+        init_db_pool()
+        init_employee_tables()
+        init_clients_table()
+        init_suppliers_table()
+        init_materials_table()
+        init_projects_table()
+        init_project_materials_table()
+        init_purchases_table()
+        init_purchase_items_table()
+        init_payments_table()
+    except Exception as e:
+        app.logger.error(f"Database initialization failed: {e}")
+
+
+initialize_database()
 
 @app.context_processor
 def inject_current_year():
