@@ -52,6 +52,7 @@ from database import (
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-steve456')
 def initialize_database():
     try:
         init_db_pool()
