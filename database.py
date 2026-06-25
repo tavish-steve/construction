@@ -673,7 +673,7 @@ def get_payments():
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("""
             SELECT pay.payment_id, pr.project_name, c.name as client_name, pay.amount_paid, 
-                   pay.payment_date, pay.method
+                   pay.payment_date, pay.method, pay.status
             FROM payments pay
             LEFT JOIN projects pr ON pay.project_id = pr.project_id
             LEFT JOIN clients c ON pr.client_id = c.client_id
@@ -874,7 +874,7 @@ def display_purchases_with_suppliers():
     print("="*80)
     data = get_purchases_with_suppliers()
     for row in data:
-        print(f"Purchase ID: {row['purchase_id']}, Supplier: {row['supplier_name']}, Date: {row['purchase_date']}, Total: {row['total_amount']}")
+        print(f"Purchase ID: {row['purchase_id']}, Supplier: {row['supplier_name']}, Date: {row['purchase_date']}, Total: {row['total_amount']}, Status: {row.get('status', 'pending')}")
     return data
 
 def display_purchase_details():
@@ -894,7 +894,7 @@ def display_payment_report():
     print("="*80)
     data = get_payment_report()
     for row in data:
-        print(f"Client: {row['client_name']}, Project: {row['project_name']}, Amount: {row['amount_paid']}, Date: {row['payment_date']}, Method: {row['method']}")
+        print(f"Client: {row['client_name']}, Project: {row['project_name']}, Amount: {row['amount_paid']}, Date: {row['payment_date']}, Method: {row['method']}, Status: {row.get('status', 'pending')}")
     return data
 
 def display_all_data():
@@ -1048,6 +1048,8 @@ def init_projects_table():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # Add status column if it doesn't exist (for existing tables)
+        cur.execute("ALTER TABLE projects ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active'")
         conn.commit()
         cur.close()
         logger.info("Created projects table")
@@ -1071,6 +1073,8 @@ def init_purchases_table():
                 status VARCHAR(50) DEFAULT 'pending'
             )
         """)
+        # Add status column if it doesn't exist (for existing tables)
+        cur.execute("ALTER TABLE purchases ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending'")
         conn.commit()
         cur.close()
         logger.info("Created purchases table")
@@ -1119,6 +1123,9 @@ def init_payments_table():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # Add status and method columns if they don't exist (for existing tables)
+        cur.execute("ALTER TABLE payments ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending'")
+        cur.execute("ALTER TABLE payments ADD COLUMN IF NOT EXISTS method VARCHAR(50)")
         conn.commit()
         cur.close()
         logger.info("Created payments table")
