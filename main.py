@@ -216,7 +216,7 @@ def add_payment():
         project_id_int = int(project_id) if project_id else None
         amount_float = float(amount_paid)
         insert_payment((project_id_int, amount_float, payment_date, method))
-        flash(f'Payment of KSh {amount_paid} recorded successfully! <a href="{url_for("reports")}">View in Reports</a>', 'success')
+        flash(f'Payment of KSh {amount_paid} recorded successfully! <a href="{url_for("reports")}"></a>' 'success')
     return redirect(url_for('payments'))
 
 @app.route('/delete_payments_bulk', methods=['POST'])
