@@ -3,6 +3,9 @@ from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 import os
 import logging
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -13,7 +16,7 @@ DB_CONFIG = {
     'host': os.environ.get('DB_HOST', '127.0.0.1'),
     'port': os.environ.get('DB_PORT', '5432'),
     'user': os.environ.get('DB_USER', 'postgres'),
-    'password': os.environ.get('DB_PASSWORD', 'rty67jouj'),
+    'password': os.environ['DB_PASSWORD'],
     'database': os.environ.get('DB_NAME', 'construction_db')
 }
 

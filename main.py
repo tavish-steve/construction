@@ -57,11 +57,14 @@ from database import (
     update_user_role
 )
 import bcrypt
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-steve456')
+app.secret_key = os.environ['SECRET_KEY']
 
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -102,15 +105,19 @@ def create_super_admin():
     """Create default super admin user if none exists"""
     conn = None
     try:
+        admin_password = os.environ.get('ADMIN_PASSWORD')
+        if not admin_password:
+            logger.warning("ADMIN_PASSWORD not set in environment. Skipping default super admin creation.")
+            return
         conn = get_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("SELECT user_id FROM users WHERE role = 'super_admin'")
         if not cur.fetchone():
-            password = 'admin123'
-            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            cur.execute("INSERT INTO users(username, password_hash, role) VALUES (%s, %s, %s)", ('superadmin', password_hash, 'super_admin'))
+            password_hash = bcrypt.hashpw(admin_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            admin_username = os.environ.get('ADMIN_USERNAME', 'superadmin')
+            cur.execute("INSERT INTO users(username, password_hash, role) VALUES (%s, %s, %s)", (admin_username, password_hash, 'super_admin'))
             conn.commit()
-            logger.info("Created super admin user: superadmin / admin123")
+            logger.info(f"Created super admin user: {admin_username}")
         cur.close()
     except psycopg2.Error as e:
         logger.error(f"Error creating super admin: {e}")
