@@ -54,7 +54,8 @@ from database import (
     get_all_users,
     insert_user,
     delete_user,
-    update_user_role
+    update_user_role,
+    change_user_password
 )
 import bcrypt
 from dotenv import load_dotenv
@@ -475,6 +476,50 @@ def admin_update_user_role(user_id):
         flash('User role updated', 'success')
     else:
         flash('Cannot change super admin role', 'danger')
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/users/change_password/<int:user_id>', methods=['POST'])
+@login_required
+def admin_change_password(user_id):
+    if not current_user.is_super_admin():
+        flash('Access denied. Super admin only.', 'danger')
+        return redirect(url_for('index'))
+    user = get_user_by_id(user_id)
+    if not user:
+        flash('User not found', 'danger')
+        return redirect(url_for('admin_users'))
+    if user['role'] == 'super_admin':
+        flash('Cannot change super admin password here. Use "Change My Password" instead.', 'danger')
+        return redirect(url_for('admin_users'))
+    new_password = request.form.get('new_password')
+    if new_password and len(new_password) >= 8:
+        password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        change_user_password(user_id, password_hash)
+        flash(f'Password changed for {user["username"]}', 'success')
+    else:
+        flash('Password must be at least 8 characters', 'danger')
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/change_own_password', methods=['POST'])
+@login_required
+def admin_change_own_password():
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+    if not current_password or not new_password or not confirm_password:
+        flash('All fields are required', 'danger')
+    elif new_password != confirm_password:
+        flash('New passwords do not match', 'danger')
+    elif len(new_password) < 8:
+        flash('Password must be at least 8 characters', 'danger')
+    else:
+        user = get_user_by_id(current_user.id)
+        if bcrypt.checkpw(current_password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+            password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            change_user_password(current_user.id, password_hash)
+            flash('Password changed successfully', 'success')
+        else:
+            flash('Current password is incorrect', 'danger')
     return redirect(url_for('admin_users'))
 
 if __name__ == '__main__':

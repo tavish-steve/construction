@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% block title %} User Management - Water Marc Builders {% endblock %}
 {% block page_title %}User Management{% endblock %}
 {% block content %}
@@ -35,8 +35,11 @@
 </div>
 
 <div class="card">
-    <div class="card-header bg-info text-white">
+    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="fas fa-users me-2"></i>Existing Users</h5>
+        <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#changeOwnPasswordModal">
+            <i class="fas fa-key me-1"></i>Change My Password
+        </button>
     </div>
     <div class="card-body">
         <table class="table table-striped" id="usersTable">
@@ -69,6 +72,7 @@
                                     <option value="super_admin" {% if user.role == 'super_admin' %}selected{% endif %} disabled>Super Admin</option>
                                 </select>
                             </form>
+                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#changePasswordModal{{ user.user_id }}" {% if user.role == 'super_admin' %}disabled{% endif %}><i class="fas fa-key"></i></button>
                             <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.user_id) }}" style="display:inline;" onsubmit="return confirm('Are you sure?');">
                                 <button type="submit" class="btn btn-danger" {% if user.role == 'super_admin' %}disabled{% endif %}><i class="fas fa-trash"></i></button>
                             </form>
@@ -80,6 +84,59 @@
         </table>
     </div>
 </div>
+
+<!-- Change Password Modals -->
+{% for user in users %}
+<div class="modal fade" id="changePasswordModal{{ user.user_id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ url_for('admin_change_password', user_id=user.user_id) }}" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Password for {{ user.username }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="new_password{{ user.user_id }}" class="form-label">New Password</label>
+                    <input type="password" class="form-control" id="new_password{{ user.user_id }}" name="new_password" required minlength="8">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-warning">Change Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Change Own Password Modal -->
+<div class="modal fade" id="changeOwnPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ url_for('admin_change_own_password') }}" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Your Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="current_password" class="form-label">Current Password</label>
+                    <input type="password" class="form-control" id="current_password" name="current_password" required>
+                </div>
+                <div class="mb-3">
+                    <label for="new_password" class="form-label">New Password</label>
+<input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="8">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-warning">Change Password</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     new DataTable('#usersTable', {

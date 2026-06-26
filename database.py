@@ -188,7 +188,7 @@ def get_user_by_id(user_id):
     try:
         conn = get_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT user_id, username, role, created_at FROM users WHERE user_id = %s", (user_id,))
+        cur.execute("SELECT user_id, username, password_hash, role, created_at FROM users WHERE user_id = %s", (user_id,))
         result = cur.fetchone()
         cur.close()
         return result
@@ -254,6 +254,21 @@ def update_user_role(user_id, new_role):
         return True
     except psycopg2.Error as e:
         logger.error(f"Error updating user role: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
+def change_user_password(user_id, new_password_hash):
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET password_hash = %s WHERE user_id = %s", (new_password_hash, user_id))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error changing user password: {e}")
         return False
     finally:
         return_connection(conn)
