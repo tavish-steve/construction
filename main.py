@@ -1,4 +1,5 @@
-﻿from flask import Flask, render_template, request, redirect, url_for, flash
+﻿from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from psycopg2.extras import RealDictCursor
 import psycopg2
 import os
@@ -8,6 +9,7 @@ from database import (
     init_db_pool,
     close_all_connections,
     init_employee_tables,
+    init_users_table,
     get_clients,
     insert_clients,
     delete_clients_bulk as delete_clients_bulk_db,
@@ -46,16 +48,79 @@ from database import (
     init_project_materials_table,
     init_purchases_table,
     init_purchase_items_table,
-    init_payments_table
+    init_payments_table,
+    get_user_by_username,
+    get_user_by_id,
+    get_all_users,
+    insert_user,
+    delete_user,
+    update_user_role
 )
+import bcrypt
 
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-steve456')
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+class User:
+    def __init__(self, user_id, username, role):
+        self.id = user_id
+        self.username = username
+        self.role = role
+    
+    def is_authenticated(self):
+        return True
+    
+    def is_active(self):
+        return True
+    
+    def is_anonymous(self):
+        return False
+    
+    def get_id(self):
+        return str(self.id)
+    
+    def is_super_admin(self):
+        return self.role == 'super_admin'
+    
+    def is_admin(self):
+        return self.role in ['super_admin', 'admin']
+
+@login_manager.user_loader
+def load_user(user_id):
+    user = get_user_by_id(int(user_id))
+    if user:
+        return User(user['user_id'], user['username'], user['role'])
+    return None
+
+def create_super_admin():
+    """Create default super admin user if none exists"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT user_id FROM users WHERE role = 'super_admin'")
+        if not cur.fetchone():
+            password = 'admin123'
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            cur.execute("INSERT INTO users(username, password_hash, role) VALUES (%s, %s, %s)", ('superadmin', password_hash, 'super_admin'))
+            conn.commit()
+            logger.info("Created super admin user: superadmin / admin123")
+        cur.close()
+    except psycopg2.Error as e:
+        logger.error(f"Error creating super admin: {e}")
+    finally:
+        return_connection(conn)
+
 def initialize_database():
     try:
         init_db_pool()
+        init_users_table()
         init_employee_tables()
         init_clients_table()
         init_suppliers_table()
@@ -65,6 +130,7 @@ def initialize_database():
         init_purchases_table()
         init_purchase_items_table()
         init_payments_table()
+        create_super_admin()
     except Exception as e:
         app.logger.error(f"Database initialization failed: {e}")
 
@@ -81,21 +147,28 @@ def before_request():
         init_db_pool()
     except Exception as e:
         app.logger.error(f"Database pool initialization failed: {e}")
+    
+    exempt_routes = ['login', 'static']
+    if not current_user.is_authenticated and request.endpoint not in exempt_routes and not request.path.startswith('/static'):
+        return redirect(url_for('login'))
 
 @app.route('/')
 def index():
     return render_template('index.html', title='Home')
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
     return redirect(url_for('index'))
 
 @app.route('/clients')
+@login_required
 def clients():
     clients = get_clients()
     return render_template('clients.html', title='Clients', clients=clients)
 
 @app.route('/add_client', methods=['POST'])
+@login_required
 def add_client():
     name = request.form.get('name')
     phone = request.form.get('phone')
@@ -106,6 +179,7 @@ def add_client():
     return redirect(url_for('clients'))
 
 @app.route('/delete_clients_bulk', methods=['POST'])
+@login_required
 def delete_clients_bulk():
     client_ids = [int(cid) for cid in request.form.get('client_ids[]', '').split(',') if cid.isdigit()]
     if client_ids:
@@ -113,6 +187,7 @@ def delete_clients_bulk():
     return redirect(url_for('clients'))
 
 @app.route('/delete_employees_bulk', methods=['POST'])
+@login_required
 def delete_employees_bulk():
     employee_ids = [int(eid) for eid in request.form.get('employee_ids[]', '').split(',') if eid.isdigit()]
     if employee_ids:
@@ -120,11 +195,13 @@ def delete_employees_bulk():
     return redirect(url_for('employees'))
 
 @app.route('/employees')
+@login_required
 def employees():
     employees = get_employees()
     return render_template('employees.html', title='Employees', employees=employees)
 
 @app.route('/add_employee', methods=['POST'])
+@login_required
 def add_employee():
     full_name = request.form.get('full_name')
     role = request.form.get('role')
@@ -138,6 +215,7 @@ def add_employee():
     return redirect(url_for('employees'))
 
 @app.route('/add_employee_payment', methods=['POST'])
+@login_required
 def add_employee_payment():
     employee_id = request.form.get('employee_id')
     amount_paid = request.form.get('amount_paid')
@@ -149,12 +227,14 @@ def add_employee_payment():
     return redirect(url_for('employees'))
 
 @app.route('/projects')
+@login_required
 def projects():
     projects = get_projects()
     clients = get_clients()
     return render_template('projects.html', title='Projects', projects=projects, clients=clients)
 
 @app.route('/add_project', methods=['POST'])
+@login_required
 def add_project():
     project_name = request.form.get('project_name')
     client_id = request.form.get('client_id')
@@ -170,6 +250,7 @@ def add_project():
     return redirect(url_for('projects'))
 
 @app.route('/delete_projects_bulk', methods=['POST'])
+@login_required
 def delete_projects_bulk():
     project_ids = [int(pid) for pid in request.form.get('project_ids[]', '').split(',') if pid.isdigit()]
     if project_ids:
@@ -177,11 +258,13 @@ def delete_projects_bulk():
     return redirect(url_for('projects'))
 
 @app.route('/materials')
+@login_required
 def materials():
     materials = get_materials()
     return render_template('materials.html', title='Materials', materials=materials)
 
 @app.route('/add_material', methods=['POST'])
+@login_required
 def add_material():
     material_name = request.form.get('material_name')
     unit = request.form.get('unit')
@@ -194,6 +277,7 @@ def add_material():
     return redirect(url_for('materials'))
 
 @app.route('/delete_materials_bulk', methods=['POST'])
+@login_required
 def delete_materials_bulk():
     material_ids = [int(mid) for mid in request.form.get('material_ids[]', '').split(',') if mid.isdigit()]
     if material_ids:
@@ -201,12 +285,14 @@ def delete_materials_bulk():
     return redirect(url_for('materials'))
 
 @app.route('/payments')
+@login_required
 def payments():
     payments = get_payments()
     projects = get_projects()
     return render_template('payments.html', title='Payments', payments=payments, projects=projects)
 
 @app.route('/add_payment', methods=['POST'])
+@login_required
 def add_payment():
     project_id = request.form.get('project_id')
     amount_paid = request.form.get('amount_paid')
@@ -220,6 +306,7 @@ def add_payment():
     return redirect(url_for('payments'))
 
 @app.route('/delete_payments_bulk', methods=['POST'])
+@login_required
 def delete_payments_bulk():
     payment_ids = [int(pid) for pid in request.form.get('payment_ids[]', '').split(',') if pid.isdigit()]
     if payment_ids:
@@ -227,6 +314,7 @@ def delete_payments_bulk():
     return redirect(url_for('payments'))
 
 @app.route('/purchases')
+@login_required
 def purchases():
     purchases = get_purchases()
     suppliers = get_suppliers()
@@ -234,6 +322,7 @@ def purchases():
     return render_template('purchases.html', title='Purchases', purchases=purchases, suppliers=suppliers, materials=materials)
 
 @app.route('/add_purchase', methods=['POST'])
+@login_required
 def add_purchase():
     supplier_choice = request.form.get('supplier_choice')
     supplier_id = None
@@ -264,6 +353,7 @@ def add_purchase():
     return redirect(url_for('purchases'))
 
 @app.route('/delete_purchases_bulk', methods=['POST'])
+@login_required
 def delete_purchases_bulk():
     purchase_ids = [int(pid) for pid in request.form.get('purchase_ids[]', '').split(',') if pid.isdigit()]
     if purchase_ids:
@@ -271,6 +361,7 @@ def delete_purchases_bulk():
     return redirect(url_for('purchases'))
 
 @app.route('/delete_suppliers_bulk', methods=['POST'])
+@login_required
 def delete_suppliers_bulk():
     supplier_ids = [int(sid) for sid in request.form.get('supplier_ids[]', '').split(',') if sid.isdigit()]
     if supplier_ids:
@@ -278,11 +369,13 @@ def delete_suppliers_bulk():
     return redirect(url_for('purchases'))
 
 @app.route('/purchase-details')
+@login_required
 def purchase_details_route():
     data = get_purchase_details()
     return render_template('purchase_details.html', title='Purchase Details', purchase_details=data)
 
 @app.route('/reports')
+@login_required
 def reports():
     projects_with_clients = get_projects_with_clients()
     project_materials = get_project_materials()
@@ -298,6 +391,84 @@ def reports():
         purchase_details=purchase_details,
         payment_report=payment_report
     )
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = get_user_by_username(username)
+        if user and bcrypt.checkpw(password.encode('utf-8'), user['password_hash'].encode('utf-8')):
+            login_user(User(user['user_id'], user['username'], user['role']))
+            flash('Login successful!', 'success')
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('index'))
+        flash('Invalid username or password', 'danger')
+    return render_template('login.html', title='Login')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Logged out successfully', 'success')
+    return redirect(url_for('login'))
+
+@app.route('/admin/users')
+@login_required
+def admin_users():
+    if not current_user.is_super_admin():
+        flash('Access denied. Super admin only.', 'danger')
+        return redirect(url_for('index'))
+    users = get_all_users()
+    return render_template('admin_users.html', title='User Management', users=users)
+
+@app.route('/admin/users/add', methods=['POST'])
+@login_required
+def admin_add_user():
+    if not current_user.is_super_admin():
+        flash('Access denied. Super admin only.', 'danger')
+        return redirect(url_for('admin_users'))
+    username = request.form.get('username')
+    password = request.form.get('password')
+    role = request.form.get('role', 'user')
+    if username and password:
+        existing = get_user_by_username(username)
+        if existing:
+            flash('Username already exists', 'danger')
+        else:
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            insert_user(username, password_hash, role)
+            flash(f'User {username} created successfully', 'success')
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
+@login_required
+def admin_delete_user(user_id):
+    if not current_user.is_super_admin():
+        flash('Access denied. Super admin only.', 'danger')
+        return redirect(url_for('index'))
+    user = get_user_by_id(user_id)
+    if user and user['role'] == 'super_admin':
+        flash('Cannot delete super admin', 'danger')
+    else:
+        delete_user(user_id)
+        flash('User deleted successfully', 'success')
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/users/update_role/<int:user_id>', methods=['POST'])
+@login_required
+def admin_update_user_role(user_id):
+    if not current_user.is_super_admin():
+        flash('Access denied. Super admin only.', 'danger')
+        return redirect(url_for('index'))
+    new_role = request.form.get('role')
+    user = get_user_by_id(user_id)
+    if user and user['role'] != 'super_admin':
+        update_user_role(user_id, new_role)
+        flash('User role updated', 'success')
+    else:
+        flash('Cannot change super admin role', 'danger')
+    return redirect(url_for('admin_users'))
 
 if __name__ == '__main__':
     try:

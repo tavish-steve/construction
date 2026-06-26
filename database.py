@@ -142,6 +142,119 @@ def init_employee_tables():
     finally:
         return_connection(conn)
 
+def init_users_table():
+    """Create users table if it doesn't exist"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                user_id SERIAL PRIMARY KEY,
+                username VARCHAR(100) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                role VARCHAR(50) NOT NULL DEFAULT 'user' CHECK (role IN ('super_admin', 'admin', 'user')),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        cur.close()
+        logger.info("Created users table")
+    except psycopg2.Error as e:
+        logger.error(f"Error creating users table: {e}")
+    finally:
+        return_connection(conn)
+
+def get_user_by_username(username):
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT user_id, username, password_hash, role FROM users WHERE username = %s", (username,))
+        result = cur.fetchone()
+        cur.close()
+        return result
+    except psycopg2.Error as e:
+        logger.error(f"Error getting user: {e}")
+        return None
+    finally:
+        return_connection(conn)
+
+def get_user_by_id(user_id):
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT user_id, username, role, created_at FROM users WHERE user_id = %s", (user_id,))
+        result = cur.fetchone()
+        cur.close()
+        return result
+    except psycopg2.Error as e:
+        logger.error(f"Error getting user by id: {e}")
+        return None
+    finally:
+        return_connection(conn)
+
+def get_all_users():
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT user_id, username, role, created_at FROM users ORDER BY created_at DESC")
+        result = cur.fetchall()
+        cur.close()
+        return result
+    except psycopg2.Error as e:
+        logger.error(f"Error getting all users: {e}")
+        return []
+    finally:
+        return_connection(conn)
+
+def insert_user(username, password_hash, role='user'):
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("INSERT INTO users(username, password_hash, role) VALUES (%s, %s, %s) RETURNING user_id", (username, password_hash, role))
+        result = cur.fetchone()
+        cur.close()
+        return result
+    except psycopg2.Error as e:
+        logger.error(f"Error inserting user: {e}")
+        return None
+    finally:
+        return_connection(conn)
+
+def delete_user(user_id):
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM users WHERE user_id = %s", (user_id,))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error deleting user: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
+def update_user_role(user_id, new_role):
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET role = %s WHERE user_id = %s", (new_role, user_id))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error updating user role: {e}")
+        return False
+    finally:
+        return_connection(conn)
+
 # ============= CLIENTS =============
 def delete_client(client_id):
     """Delete a client by ID"""
@@ -846,7 +959,6 @@ def get_payment_report():
         return_connection(conn)
 
 # ============= DISPLAY FUNCTIONS =============
-
 def display_projects_with_clients():
     """Display projects with client information"""
     print("\n" + "="*80)
