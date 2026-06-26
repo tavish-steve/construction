@@ -12,11 +12,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Connection pool settings
+_db_password = os.environ.get('DB_PASSWORD')
+if not _db_password:
+    raise RuntimeError("DB_PASSWORD environment variable is not set")
+
 DB_CONFIG = {
     'host': os.environ.get('DB_HOST', '127.0.0.1'),
     'port': os.environ.get('DB_PORT', '5432'),
     'user': os.environ.get('DB_USER', 'postgres'),
-    'password': os.environ['DB_PASSWORD'],
+    'password': _db_password,
     'database': os.environ.get('DB_NAME', 'construction_db')
 }
 

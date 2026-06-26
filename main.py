@@ -65,7 +65,9 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = os.environ['SECRET_KEY']
+app.secret_key = os.environ.get('SECRET_KEY')
+if not app.secret_key:
+    raise RuntimeError("SECRET_KEY environment variable is not set")
 
 login_manager = LoginManager()
 login_manager.init_app(app)
