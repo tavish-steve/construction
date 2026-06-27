@@ -315,7 +315,7 @@ def get_clients():
     try:
         conn = get_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT client_id, name, phone, email, address, created_at FROM clients ORDER BY created_at DESC")
+        cur.execute("SELECT client_id, name, phone, email, address, created_at FROM clients ORDER BY client_id ASC")
         result = cur.fetchall()
         cur.close()
         return result
@@ -362,7 +362,7 @@ def get_employees():
                 FROM employee_payments
                 GROUP BY employee_id
             ) ep ON e.employee_id = ep.employee_id
-            ORDER BY e.employee_id DESC
+            ORDER BY e.employee_id ASC
         """)
         result = cur.fetchall()
         cur.close()
@@ -574,7 +574,7 @@ def get_materials():
     try:
         conn = get_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT material_id, material_name, unit, unit_price, stock_quantity FROM materials ORDER BY material_id DESC")
+        cur.execute("SELECT DISTINCT ON (LOWER(material_name)) material_id, material_name, unit, unit_price, stock_quantity FROM materials ORDER BY LOWER(material_name), material_id ASC")
         result = cur.fetchall()
         cur.close()
         return result
@@ -589,13 +589,36 @@ def insert_materials(values):
     try:
         conn = get_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
+        material_name = values[0]
+        cur.execute("SELECT material_id FROM materials WHERE LOWER(material_name) = LOWER(%s)", (material_name,))
+        existing = cur.fetchone()
+        if existing:
+            cur.close()
+            return existing
         cur.execute("INSERT INTO materials(material_name, unit, unit_price, stock_quantity) VALUES (%s, %s, %s, %s) RETURNING material_id", values)
         result = cur.fetchone()
+        conn.commit()
         cur.close()
         return result
     except psycopg2.Error as e:
         logger.error(f"Error inserting material: {e}")
         return None
+    finally:
+        return_connection(conn)
+
+def update_material_stock(material_id, quantity_change):
+    """Update material stock by adding or subtracting quantity"""
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("UPDATE materials SET stock_quantity = GREATEST(0, stock_quantity + %s) WHERE material_id = %s", (quantity_change, material_id))
+        conn.commit()
+        cur.close()
+        return True
+    except psycopg2.Error as e:
+        logger.error(f"Error updating material stock: {e}")
+        return False
     finally:
         return_connection(conn)
 
@@ -637,7 +660,7 @@ def get_suppliers():
     try:
         conn = get_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
-        cur.execute("SELECT supplier_id, supplier_name, phone, email, address FROM suppliers ORDER BY supplier_id DESC")
+        cur.execute("SELECT supplier_id, supplier_name, phone, email, address FROM suppliers ORDER BY supplier_id ASC")
         result = cur.fetchall()
         cur.close()
         return result
@@ -857,9 +880,9 @@ def get_projects_with_clients():
                 p.status,
                 p.start_date,
                 p.end_date
-            FROM projects p
-            LEFT JOIN clients c ON p.client_id = c.client_id
-            ORDER BY p.project_id DESC
+             FROM projects p
+             LEFT JOIN clients c ON p.client_id = c.client_id
+             ORDER BY p.project_id ASC
         """)
         result = cur.fetchall()
         cur.close()
@@ -1155,6 +1178,11 @@ def init_materials_table():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        cur.execute("""
+            DELETE FROM materials a USING materials b
+            WHERE a.material_id > b.material_id AND LOWER(a.material_name) = LOWER(b.material_name)
+        """)
+        cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_material_name ON materials (LOWER(material_name))")
         conn.commit()
         cur.close()
         logger.info("Created materials table")

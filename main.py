@@ -23,6 +23,7 @@ from database import (
     delete_projects_bulk as delete_projects_bulk_db,
     get_materials,
     insert_materials,
+    update_material_stock,
     delete_materials_bulk as delete_materials_bulk_db,
     get_payments,
     insert_payment,
@@ -289,7 +290,23 @@ def add_material():
     if material_name:
         unit_price_float = float(unit_price) if unit_price else 0.0
         stock_int = int(stock_quantity) if stock_quantity else 0
-        insert_materials((material_name, unit, unit_price_float, stock_int))
+        result = insert_materials((material_name, unit, unit_price_float, stock_int))
+        if result:
+            flash(f'Material "{material_name}" added with {stock_int} in stock', 'success')
+        else:
+            flash(f'Material "{material_name}" already exists', 'warning')
+    return redirect(url_for('materials'))
+
+@app.route('/add_material_usage', methods=['POST'])
+@login_required
+def add_material_usage():
+    material_id = request.form.get('material_id')
+    quantity_used = request.form.get('quantity_used')
+    if material_id and quantity_used:
+        material_id_int = int(material_id)
+        quantity_used_int = int(quantity_used)
+        update_material_stock(material_id_int, -quantity_used_int)
+        flash(f'{quantity_used_int} units recorded as used. Stock updated.', 'success')
     return redirect(url_for('materials'))
 
 @app.route('/delete_materials_bulk', methods=['POST'])
@@ -342,20 +359,30 @@ def purchases():
 def add_purchase():
     supplier_choice = request.form.get('supplier_choice')
     supplier_id = None
+    material_id = None
     if supplier_choice == 'new':
         new_supplier_name = request.form.get('new_supplier_name')
         new_supplier_phone = request.form.get('new_supplier_phone')
         new_supplier_email = request.form.get('new_supplier_email')
+        new_supplier_material_name = request.form.get('new_supplier_material_name')
         if new_supplier_name:
             supplier_result = insert_suppliers((new_supplier_name, new_supplier_phone, new_supplier_email, ''))
             if supplier_result:
                 supplier_id = supplier_result.get('supplier_id')
+            if new_supplier_material_name:
+                material_result = insert_materials((new_supplier_material_name, 'pcs', 0.0, 0))
+                if material_result:
+                    material_id = material_result.get('material_id')
     else:
         supplier_id = request.form.get('supplier_id')
         supplier_id = int(supplier_id) if supplier_id else None
-    material_id = request.form.get('material_id')
+        material_id = request.form.get('material_id')
     quantity = request.form.get('quantity')
     unit_price = request.form.get('unit_price')
+    if quantity:
+        quantity = int(quantity)
+    if unit_price:
+        unit_price = float(unit_price)
     if supplier_id and material_id and quantity and unit_price:
         material_id = int(material_id)
         quantity = int(quantity)
@@ -365,6 +392,7 @@ def add_purchase():
         if purchase_result:
             purchase_id = purchase_result.get('purchase_id')
             insert_purchase_items((purchase_id, material_id, quantity, unit_price))
+            update_material_stock(material_id, quantity)
             flash(f'Purchase of KSh {total_amount} recorded successfully! <a href="{url_for("reports")}">View in Reports</a>', 'success')
     return redirect(url_for('purchases'))
 

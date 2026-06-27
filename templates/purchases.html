@@ -45,9 +45,13 @@
                 <label for="new_supplier_email" class="form-label"><i class="fas fa-envelope me-1"></i>Email</label>
                 <input type="email" class="form-control" id="new_supplier_email" name="new_supplier_email" placeholder="Email">
             </div>
+            <div class="col-md-4 new-supplier-field" style="display: none;">
+                <label for="new_supplier_material_name" class="form-label"><i class="fas fa-box me-1"></i>Material to Supply</label>
+                <input type="text" class="form-control" id="new_supplier_material_name" name="new_supplier_material_name" placeholder="Type material name">
+            </div>
             
             <!-- Material Selection -->
-            <div class="col-md-4">
+            <div class="col-md-4" id="materialSelectionDiv">
                 <label for="material_id" class="form-label"><i class="fas fa-box me-1"></i>Material</label>
                 <select class="form-select" id="material_id" name="material_id">
                     <option value="">-- Select Material --</option>
@@ -190,12 +194,17 @@
             if ($(this).val() === 'existing') {
                 $('#existingSupplierDiv').show();
                 $('.new-supplier-field').hide();
+                $('#materialSelectionDiv').show();
                 $('#new_supplier_name').prop('required', false);
+                $('#material_id').prop('required', true);
+                $('#new_supplier_material_name').prop('required', false);
             } else {
                 $('#existingSupplierDiv').hide();
                 $('.new-supplier-field').show();
+                $('#materialSelectionDiv').hide();
                 $('#new_supplier_name').prop('required', true);
-                $('#supplier_id').prop('required', false);
+                $('#material_id').prop('required', false);
+                $('#new_supplier_material_name').prop('required', true);
             }
         });
     });
