@@ -158,13 +158,19 @@ def before_request():
     except Exception as e:
         app.logger.error(f"Database pool initialization failed: {e}")
     
-    exempt_routes = ['login', 'static']
+    exempt_routes = ['login', 'static', 'home']
     if not current_user.is_authenticated and request.endpoint not in exempt_routes and not request.path.startswith('/static'):
         return redirect(url_for('login'))
 
 @app.route('/')
 def index():
-    return render_template('index.html', title='Home')
+    if not current_user.is_authenticated:
+        return redirect(url_for('home'))
+    return render_template('index.html', title='Dashboard')
+
+@app.route('/home')
+def home():
+    return render_template('home.html', title='Home')
 
 @app.route('/dashboard')
 @login_required

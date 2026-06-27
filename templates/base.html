@@ -36,8 +36,7 @@
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
       <div class="container-fluid px-4">
-        <a class="navbar-brand" href="/">Water Marc Builders</a>
-        {% if current_user.is_authenticated %}
+        <a class="navbar-brand" href="/home">Water Marc Builders</a>
         <button
           class="navbar-toggler"
           type="button"
@@ -51,7 +50,8 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ms-auto">
-            <li><a class="nav-link" href="/"><i class="fas fa-home me-1"></i> Home</a></li>
+            <li><a class="nav-link" href="/home"><i class="fas fa-home me-1"></i> Home</a></li>
+            {% if current_user.is_authenticated %}
             <li><a class="nav-link" href="/clients"><i class="fas fa-users me-1"></i> Clients</a></li>
             <li><a class="nav-link" href="/employees"><i class="fas fa-hard-hat me-1"></i> Employees</a></li>
             <li><a class="nav-link" href="/projects"><i class="fas fa-building me-1"></i> Projects</a></li>
@@ -63,13 +63,11 @@
             <li><a class="nav-link" href="{{ url_for('admin_users') }}"><i class="fas fa-user-cog me-1"></i> Users</a></li>
             {% endif %}
             <li><a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-1"></i> Logout ({{ current_user.username }})</a></li>
+            {% else %}
+            <li><a class="nav-link" href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt me-1"></i> Login</a></li>
+            {% endif %}
           </ul>
         </div>
-        {% else %}
-        <ul class="navbar-nav ms-auto">
-          <li><a class="nav-link" href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt me-1"></i> Login</a></li>
-        </ul>
-        {% endif %}
       </div>
     </nav>
 
@@ -92,6 +90,23 @@
       
       {% endblock %}
     </div>
+
+    <footer class="site-footer mt-5 py-3 bg-dark text-white">
+      <div class="container-fluid px-4">
+        <div class="row align-items-center">
+          <div class="col-md-4">
+            <h6 class="mb-0">Water Marc Builders</h6>
+          </div>
+          <div class="col-md-4 text-center">
+            <p class="mb-0 small">Email: watermarcbuilders@gmail.com</p>
+            <p class="mb-0 small">Contact: +254 727 043 873</p>
+          </div>
+          <div class="col-md-4 text-end">
+            <p class="mb-0 small">TikTok: @watermarc.builder1</p>
+          </div>
+        </div>
+      </div>
+    </footer>
 
     <!-- Bulk Selection Scripts -->
     <script>
