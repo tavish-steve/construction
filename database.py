@@ -543,6 +543,7 @@ def delete_material(material_id):
     try:
         conn = get_connection()
         cur = conn.cursor()
+        cur.execute("DELETE FROM purchase_items WHERE material_id = %s", (material_id,))
         cur.execute("DELETE FROM materials WHERE material_id = %s", (material_id,))
         conn.commit()
         cur.close()
@@ -559,6 +560,7 @@ def delete_materials_bulk(material_ids):
     try:
         conn = get_connection()
         cur = conn.cursor()
+        cur.execute("DELETE FROM purchase_items WHERE material_id = ANY(%s)", (material_ids,))
         cur.execute("DELETE FROM materials WHERE material_id = ANY(%s)", (material_ids,))
         conn.commit()
         cur.close()
