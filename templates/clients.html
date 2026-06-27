@@ -75,12 +75,12 @@
                                  <input class="form-check-input row-checkbox" type="checkbox" value="{{ client.client_id }}" data-type="clients" onchange="rowSelected('clients')">
                              </div>
                          </td>
-                         <td><span class="badge bg-secondary">{{ client.client_id }}</span></td>
-                         <td><strong>{{ client.name }}</strong></td>
-                         <td>{{ client.phone }}</td>
-                         <td>{{ client.email }}</td>
-                         <td>{{ client.address }}</td>
-                          <td><small class="text-muted">{{ client.created_at }}</small></td>
+                          <td><span class="badge bg-secondary">{{ loop.index }}</span></td>
+                          <td><strong>{{ client.name }}</strong></td>
+                          <td>{{ client.phone }}</td>
+                          <td>{{ client.email }}</td>
+                          <td>{{ client.address }}</td>
+                           <td><small class="text-muted">{{ client.created_at }}</small></td>
                       </tr>
                      {% endfor %}
                  </tbody>

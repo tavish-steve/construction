@@ -81,7 +81,7 @@
                                 <input class="form-check-input row-checkbox" type="checkbox" value="{{ project.project_id }}" data-type="projects" onchange="rowSelected('projects')">
                             </div>
                         </td>
-                        <td><span class="badge bg-secondary">{{ project.project_id }}</span></td>
+                        <td><span class="badge bg-secondary">{{ loop.index }}</span></td>
                         <td><strong>{{ project.project_name }}</strong></td>
                         <td>{{ project.client_name }}</td>
                         <td>{{ project.start_date }}</td>

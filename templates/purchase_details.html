@@ -30,7 +30,7 @@
                         <td>{{ detail.quantity }}</td>
                         <td><span class="text-success">KSh {{ detail.price|default(0) }}</span></td>
                         <td>{{ detail.purchase_date }}</td>
-                        <td><span class="badge bg-secondary">{{ detail.purchase_id }}</span></td>
+                        <td><span class="badge bg-secondary">{{ loop.index }}</span></td>
                     </tr>
                     {% endfor %}
                 </tbody>

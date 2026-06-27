@@ -85,7 +85,7 @@
                                 <input class="form-check-input row-checkbox" type="checkbox" value="{{ payment.payment_id }}" data-type="payments" onchange="rowSelected('payments')">
                             </div>
                         </td>
-                        <td><span class="badge bg-secondary">{{ payment.payment_id }}</span></td>
+                        <td><span class="badge bg-secondary">{{ loop.index }}</span></td>
                         <td><strong>{{ payment.project_name }}</strong></td>
                         <td>{{ payment.client_name }}</td>
                         <td><span class="text-success">KSh {{ payment.amount_paid|default(0) }}</span></td>

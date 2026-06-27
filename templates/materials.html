@@ -103,7 +103,7 @@
                                 <input class="form-check-input row-checkbox" type="checkbox" value="{{ material.material_id }}" data-type="materials" onchange="rowSelected('materials')">
                             </div>
                         </td>
-                        <td><span class="badge bg-secondary">{{ material.material_id }}</span></td>
+                        <td><span class="badge bg-secondary">{{ loop.index }}</span></td>
                         <td><strong>{{ material.material_name }}</strong></td>
                         <td>{{ material.unit }}</td>
                         <td>KSh {{ material.unit_price|default(0)|int }}</td>

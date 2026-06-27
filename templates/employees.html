@@ -113,13 +113,13 @@
                                  <input class="form-check-input row-checkbox" type="checkbox" value="{{ employee.employee_id }}" data-type="employees" onchange="rowSelected('employees')">
                              </div>
                          </td>
-                         <td><span class="badge bg-secondary">{{ employee.employee_id }}</span></td>
-                         <td><strong>{{ employee.full_name }}</strong></td>
-                         <td>{{ employee.role }}</td>
-                         <td>{{ employee.phone }}</td>
-                         <td>KSh {{ employee.wage_per_day|default(0)|int }}</td>
-                         <td><span class="text-success">KSh {{ employee.money_paid|default(0)|int }}</span></td>
-                         <td><span class="text-danger">KSh {{ employee.money_not_paid|default(0)|int }}</span></td>
+                          <td><span class="badge bg-secondary">{{ loop.index }}</span></td>
+                          <td><strong>{{ employee.full_name }}</strong></td>
+                          <td>{{ employee.role }}</td>
+                          <td>{{ employee.phone }}</td>
+                          <td>KSh {{ employee.wage_per_day|default(0)|int }}</td>
+                          <td><span class="text-success">KSh {{ employee.money_paid|default(0)|int }}</span></td>
+                          <td><span class="text-danger">KSh {{ employee.money_not_paid|default(0)|int }}</span></td>
                           <td><small class="text-muted">{{ employee.created_at }}</small></td>
                       </tr>
                      {% endfor %}

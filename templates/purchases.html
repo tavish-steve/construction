@@ -115,7 +115,7 @@
                                 <input class="form-check-input row-checkbox" type="checkbox" value="{{ purchase.purchase_id }}" data-type="purchases" onchange="rowSelected('purchases')">
                             </div>
                         </td>
-                        <td><span class="badge bg-secondary">{{ purchase.purchase_id }}</span></td>
+                        <td><span class="badge bg-secondary">{{ loop.index }}</span></td>
                         <td><strong>{{ purchase.supplier_name }}</strong></td>
                         <td>{{ purchase.purchase_date }}</td>
                           <td><span class="text-success">KSh {{ purchase.total_amount|default(0) }}</span></td>
@@ -167,7 +167,7 @@
                                 <input class="form-check-input row-checkbox" type="checkbox" value="{{ supplier.supplier_id }}" data-type="suppliers" onchange="rowSelected('suppliers')">
                             </div>
                         </td>
-                        <td><span class="badge bg-secondary">{{ supplier.supplier_id }}</span></td>
+                        <td><span class="badge bg-secondary">{{ loop.index }}</span></td>
                         <td><strong>{{ supplier.supplier_name }}</strong></td>
                         <td>{{ supplier.phone }}</td>
                           <td>{{ supplier.email }}</td>

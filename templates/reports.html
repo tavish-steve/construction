@@ -146,7 +146,6 @@
                         <thead>
                             <tr>
                                 <th><i class="fas fa-sort-numeric-up me-1"></i>#</th>
-                                <th><i class="fas fa-hashtag me-1"></i>Purchase ID</th>
                                 <th><i class="fas fa-user me-1"></i>Supplier</th>
                                 <th><i class="fas fa-calendar-alt me-1"></i>Date</th>
                                 <th><i class="fas fa-money-bill me-1"></i>Total Amount</th>
@@ -157,7 +156,6 @@
                             {% for purchase in purchases_with_suppliers %}
                             <tr>
                                 <td><span class="badge bg-primary">{{ loop.index }}</span></td>
-                                <td><span class="badge bg-secondary">{{ purchase.purchase_id }}</span></td>
                                 <td><strong>{{ purchase.supplier_name }}</strong></td>
                                 <td>{{ purchase.purchase_date }}</td>
                                 <td><span class="text-success">KSh {{ purchase.total_amount|default(0) }}</span></td>
@@ -198,7 +196,6 @@
                                 <th><i class="fas fa-plus-minus me-1"></i>Quantity</th>
                                 <th><i class="fas fa-tag me-1"></i>Price</th>
                                 <th><i class="fas fa-calendar-alt me-1"></i>Purchase Date</th>
-                                <th><i class="fas fa-hashtag me-1"></i>Purchase ID</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -210,7 +207,6 @@
                                 <td>{{ detail.quantity }}</td>
                                 <td><span class="text-success">KSh {{ detail.price|default(0) }}</span></td>
                                 <td>{{ detail.purchase_date }}</td>
-                                <td><span class="badge bg-secondary">{{ detail.purchase_id }}</span></td>
                             </tr>
                             {% endfor %}
                         </tbody>
