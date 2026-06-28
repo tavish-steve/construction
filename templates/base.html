@@ -31,8 +31,8 @@
   
   <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
-      <div class="container">
-        <a class="navbar-brand" href="/home">Water<br>Marc<br>Builders</a>
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/home">Water Marc Builders</a>
         <button
           class="navbar-toggler"
           type="button"
@@ -44,8 +44,8 @@
         >
           <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse pe-3" id="navbarNav">
-          <ul class="navbar-nav ms-auto pe-3">
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
             <li><a class="nav-link" href="/home"><i class="fas fa-home me-1"></i> Home</a></li>
             {% if current_user.is_authenticated %}
             <li><a class="nav-link" href="/clients"><i class="fas fa-users me-1"></i> Clients</a></li>

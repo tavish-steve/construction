@@ -30,12 +30,12 @@ body {
     background-color: #f5f6fa;
     color: #333;
     line-height: 1.6;
-    padding-top: 70px;
+    padding-top: 60px;
 }
 
 /* ===== Navbar Enhancements ===== */
 .navbar {
-    padding: 0.75rem 1.5rem !important;
+    padding: 0.2rem 1rem !important;
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -46,6 +46,7 @@ body {
     background-color: #16213e !important;
     transition: all var(--transition-speed) ease;
     margin: 0 !important;
+    min-height: 36px;
 }
 
 nav.navbar {
@@ -58,18 +59,25 @@ nav.navbar {
 
 .navbar-brand {
     font-weight: 700;
-    font-size: 1.1rem;
-    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+    letter-spacing: 0.3px;
     color: #fff !important;
     display: flex;
     align-items: center;
-    gap: 10px;
-    line-height: 1.2;
+    gap: 6px;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-left: 0 !important;
 }
 
 .navbar-brand::before {
     content: '🏗️';
-    font-size: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.navbar > .container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
 }
 
 .navbar-toggler {
@@ -92,11 +100,12 @@ nav.navbar {
 }
 
 .nav-link {
-    padding: 0.6rem 1rem !important;
+    padding: 0.3rem 0.6rem !important;
     font-weight: 500;
+    font-size: 0.85rem;
     transition: all var(--transition-speed) ease;
     border-radius: var(--border-radius-sm);
-    margin: 0 3px;
+    margin: 0 1px;
     position: relative;
     color: #fff !important;
 }
@@ -129,12 +138,21 @@ nav.navbar {
 }
 
 @media (max-width: 991px) {
+    .navbar {
+        left: 0 !important;
+        transform: none !important;
+        max-width: none !important;
+        width: 100% !important;
+        border-radius: 0;
+    }
+
     .navbar-collapse {
         position: absolute;
         top: 100%;
         left: 0;
         right: 0;
         background: linear-gradient(135deg, var(--dark-color) 0%, #16213e 100%) !important;
+        background-color: #16213e !important;
         border-radius: 0 0 var(--border-radius) var(--border-radius);
         padding: 1rem;
         margin-top: 0;
