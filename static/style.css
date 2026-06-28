@@ -43,6 +43,7 @@ body {
     width: 100% !important;
     z-index: 1030 !important;
     background: linear-gradient(135deg, var(--dark-color) 0%, #16213e 100%) !important;
+    background-color: #16213e !important;
     transition: all var(--transition-speed) ease;
     margin: 0 !important;
 }
@@ -57,12 +58,13 @@ nav.navbar {
 
 .navbar-brand {
     font-weight: 700;
-    font-size: 1.4rem;
+    font-size: 1.1rem;
     letter-spacing: 0.5px;
     color: #fff !important;
     display: flex;
     align-items: center;
     gap: 10px;
+    line-height: 1.2;
 }
 
 .navbar-brand::before {
@@ -71,13 +73,22 @@ nav.navbar {
 }
 
 .navbar-toggler {
-    border: none;
-    padding: 0.5rem;
+    border: none !important;
+    padding: 0.5rem !important;
     outline: none !important;
+    box-shadow: none !important;
 }
 
-.navbar-toggler:focus {
-    box-shadow: none;
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+}
+
+.navbar-collapse {
+    background: linear-gradient(135deg, var(--dark-color) 0%, #16213e 100%) !important;
+    background-color: #16213e !important;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    padding: 1rem;
+    margin-top: 0.5rem;
 }
 
 .nav-link {
@@ -87,7 +98,7 @@ nav.navbar {
     border-radius: var(--border-radius-sm);
     margin: 0 3px;
     position: relative;
-    color: rgba(255, 255, 255, 0.9) !important;
+    color: #fff !important;
 }
 
 .nav-link::after {
@@ -103,7 +114,7 @@ nav.navbar {
 }
 
 .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(52, 152, 219, 0.3);
     color: #fff !important;
 }
 
@@ -113,8 +124,32 @@ nav.navbar {
 }
 
 .nav-link.active {
-    background-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(52, 152, 219, 0.4);
     color: #fff !important;
+}
+
+@media (max-width: 991px) {
+    .navbar-collapse {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, var(--dark-color) 0%, #16213e 100%) !important;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        padding: 1rem;
+        margin-top: 0;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .nav-link {
+        padding: 0.75rem 1rem !important;
+        margin: 2px 0;
+        border-radius: var(--border-radius-sm);
+    }
+
+    .nav-link:hover {
+        background-color: rgba(52, 152, 219, 0.35);
+    }
 }
 
 /* ===== Container Enhancement ===== */
@@ -294,66 +329,6 @@ nav.navbar {
     border-radius: var(--border-radius-sm);
 }
 
-/* ===== Stat Cards (for dashboard) ===== */
-.stat-card {
-    border-radius: var(--border-radius);
-    padding: 1.5rem;
-    color: #fff;
-    transition: all var(--transition-speed) ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    transform: scale(0);
-    transition: all var(--transition-speed) ease;
-}
-
-.stat-card:hover::before {
-    transform: scale(2);
-    right: 0;
-    top: 0;
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-.stat-card .stat-icon {
-    font-size: 2.5rem;
-    opacity: 0.9;
-}
-
-.stat-card .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0.5rem 0;
-}
-
-.stat-card .stat-label {
-    font-size: 0.9rem;
-    opacity: 0.9;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* Stat card colors */
-.stat-card.primary { background: linear-gradient(135deg, var(--secondary-color) 0%, #2980b9 100%); }
-.stat-card.success { background: linear-gradient(135deg, var(--success-color) 0%, #1e8449 100%); }
-.stat-card.warning { background: linear-gradient(135deg, var(--warning-color) 0%, #d68910 100%); }
-.stat-card.danger { background: linear-gradient(135deg, var(--accent-color) 0%, #c0392b 100%); }
-.stat-card.info { background: linear-gradient(135deg, var(--info-color) 0%, #117a65 100%); }
-.stat-card.dark { background: linear-gradient(135deg, var(--dark-color) 0%, #2d3436 100%); }
-
 /* ===== Quick Access Cards (Home Page) ===== */
 .quick-access-card {
     border-radius: var(--border-radius);
@@ -442,15 +417,11 @@ nav.navbar {
     }
     
     .navbar-brand {
-        font-size: 1.2rem;
+        font-size: 1rem;
     }
     
     .container-main {
         padding: 1rem;
-    }
-    
-    .stat-card .stat-value {
-        font-size: 1.5rem;
     }
     
     .quick-access-card {
