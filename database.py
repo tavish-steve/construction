@@ -608,6 +608,36 @@ def insert_materials(values):
     finally:
         return_connection(conn)
 
+def get_material_by_name(material_name):
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT material_id, material_name, unit, unit_price, stock_quantity FROM materials WHERE LOWER(material_name) = LOWER(%s)", (material_name,))
+        result = cur.fetchone()
+        cur.close()
+        return result
+    except psycopg2.Error as e:
+        logger.error(f"Error getting material by name: {e}")
+        return None
+    finally:
+        return_connection(conn)
+
+def get_material_by_id(material_id):
+    conn = None
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SELECT material_id, material_name, unit, unit_price, stock_quantity FROM materials WHERE material_id = %s", (material_id,))
+        result = cur.fetchone()
+        cur.close()
+        return result
+    except psycopg2.Error as e:
+        logger.error(f"Error getting material by id: {e}")
+        return None
+    finally:
+        return_connection(conn)
+
 def update_material_stock(material_id, quantity_change):
     """Update material stock by adding or subtracting quantity"""
     conn = None

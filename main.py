@@ -33,7 +33,6 @@ from database import (
     get_purchase_items,
     insert_purchase_items,
     get_suppliers,
-    insert_suppliers,
     delete_suppliers_bulk as delete_suppliers_bulk_db,
     get_projects_with_clients,
     get_project_materials,
@@ -56,7 +55,9 @@ from database import (
     insert_user,
     delete_user,
     update_user_role,
-    change_user_password
+    change_user_password,
+    get_material_by_id,
+    get_material_by_name
 )
 import bcrypt
 from dotenv import load_dotenv
@@ -167,7 +168,19 @@ def before_request():
 def index():
     if not current_user.is_authenticated:
         return redirect(url_for('home'))
-    return render_template('index.html', title='Dashboard')
+    clients_count = len(get_clients())
+    employees_count = len(get_employees())
+    projects_count = len(get_projects())
+    materials_count = len(get_materials())
+    purchases_count = len(get_purchases())
+    payments_count = len(get_payments())
+    return render_template('index.html', title='Dashboard',
+        clients_count=clients_count,
+        employees_count=employees_count,
+        projects_count=projects_count,
+        materials_count=materials_count,
+        purchases_count=purchases_count,
+        payments_count=payments_count)
 
 @app.route('/home')
 def home():
@@ -305,8 +318,13 @@ def add_material_usage():
     if material_id and quantity_used:
         material_id_int = int(material_id)
         quantity_used_int = int(quantity_used)
-        update_material_stock(material_id_int, -quantity_used_int)
-        flash(f'{quantity_used_int} units recorded as used. Stock updated.', 'success')
+        material = get_material_by_id(material_id_int)
+        current_stock = material['stock_quantity'] if material else 0
+        if quantity_used_int > current_stock:
+            flash(f'Not enough stock! Only {current_stock} units available. Cannot use {quantity_used_int} units.', 'danger')
+        else:
+            update_material_stock(material_id_int, -quantity_used_int)
+            flash(f'{quantity_used_int} units recorded as used. Stock updated.', 'success')
     return redirect(url_for('materials'))
 
 @app.route('/delete_materials_bulk', methods=['POST'])
@@ -360,6 +378,14 @@ def add_purchase():
     supplier_choice = request.form.get('supplier_choice')
     supplier_id = None
     material_id = None
+    quantity = request.form.get('quantity')
+    unit_price = request.form.get('unit_price')
+
+    if quantity:
+        quantity = int(quantity)
+    if unit_price:
+        unit_price = float(unit_price)
+
     if supplier_choice == 'new':
         new_supplier_name = request.form.get('new_supplier_name')
         new_supplier_phone = request.form.get('new_supplier_phone')
@@ -369,20 +395,19 @@ def add_purchase():
             supplier_result = insert_suppliers((new_supplier_name, new_supplier_phone, new_supplier_email, ''))
             if supplier_result:
                 supplier_id = supplier_result.get('supplier_id')
-            if new_supplier_material_name:
-                material_result = insert_materials((new_supplier_material_name, 'pcs', 0.0, 0))
+        if new_supplier_material_name and quantity and unit_price:
+            existing = get_material_by_name(new_supplier_material_name)
+            if existing:
+                material_id = existing['material_id']
+            else:
+                material_result = insert_materials((new_supplier_material_name, 'pcs', unit_price, 0))
                 if material_result:
                     material_id = material_result.get('material_id')
     else:
         supplier_id = request.form.get('supplier_id')
         supplier_id = int(supplier_id) if supplier_id else None
         material_id = request.form.get('material_id')
-    quantity = request.form.get('quantity')
-    unit_price = request.form.get('unit_price')
-    if quantity:
-        quantity = int(quantity)
-    if unit_price:
-        unit_price = float(unit_price)
+
     if supplier_id and material_id and quantity and unit_price:
         material_id = int(material_id)
         quantity = int(quantity)
