@@ -19,10 +19,6 @@
     <!-- DataTables CSS -->
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css"
-    />
-    <link
-      rel="stylesheet"
       href="https://cdn.datatables.net/2.3.7/css/dataTables.bootstrap5.css"
     />
     <!-- DataTables Scripts -->
@@ -48,8 +44,8 @@
         >
           <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
+        <div class="collapse navbar-collapse pe-3" id="navbarNav">
+          <ul class="navbar-nav ms-auto pe-3">
             <li><a class="nav-link" href="/home"><i class="fas fa-home me-1"></i> Home</a></li>
             {% if current_user.is_authenticated %}
             <li><a class="nav-link" href="/clients"><i class="fas fa-users me-1"></i> Clients</a></li>
@@ -62,7 +58,7 @@
             {% if current_user.is_super_admin() %}
             <li><a class="nav-link" href="{{ url_for('admin_users') }}"><i class="fas fa-user-cog me-1"></i> Users</a></li>
             {% endif %}
-            <li><a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-1"></i> Logout ({{ current_user.username }})</a></li>
+            <li class="me-3"><a class="nav-link" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-1"></i> Logout ({{ current_user.username }})</a></li>
             {% else %}
             <li><a class="nav-link" href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt me-1"></i> Login</a></li>
             {% endif %}
